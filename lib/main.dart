@@ -1,8 +1,10 @@
+import 'package:careplusapp/forgot_password.dart';
 import 'package:careplusapp/privacy_policy.dart';
 import 'package:careplusapp/terms_condition.dart';
 import 'package:flutter/material.dart';
 import 'login.dart';
 import 'register.dart';
+import 'home.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 Future<void> main() async {
@@ -17,7 +19,7 @@ Future<void> main() async {
       storageBucket: 'careplusapp-2bd07.firebasestorage.app',
     ),
   );
- runApp(MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -28,106 +30,302 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       initialRoute: '/',
       routes: {
+        '/home': (context) => Home(),
         '/login': (context) => Login(),
-        '/register':(context) => Register(),
-        '/terms_condition':(context)=>TermsCondition(),
-        '/privacy_policy': (context)=> PrivacyPolicy()
+        '/register': (context) => Register(),
+        '/terms_condition': (context) => TermsCondition(),
+        '/privacy_policy': (context) => PrivacyPolicy(),
+        '/forgot_password': (context) => ForgotPassword(),
       },
       home: Scaffold(
-        backgroundColor: const Color(0xFFD7CDC3),
-        body: Column(
-          children: [
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0).copyWith(top: 35.0, left: 20.0),
-                  child: GestureDetector(
-                    onTap: () {
-                      // Your tap action here
-                      setState(() {});
-                    },
-                    child: Image.asset(
-                      'asset/image/weblogo.png',  // Make sure this path matches your asset folder
-                      width: 70,
-                      height: 70,
-                      fit: BoxFit.cover,
-                    ),
+        backgroundColor: const Color(0xFFC1BFA9),
+        body: Center(
+          child: Column(
+            children: [
+              //Header
+              SizedBox(height: 115.0),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Welcome to',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontFamily: 'Crimson',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0).copyWith(top: 35.0, left: 200.0),
-                  child: Builder(
-                    builder: (context) => GestureDetector(
-                      onTap: () {
-                        print("Tapped");
-                        Navigator.pushNamed(context, '/login');
-                      },
-                      child: Image.asset(
-                        'asset/image/user.png',
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.all(8.0).copyWith(top: 35.0, left: 20.0),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(
+                  8.0,
+                ).copyWith(top: 15.0, left: 20.0),
+                child: GestureDetector(
+                  onTap: () {
+                    // Your tap action here
+                    setState(() {});
+                  },
                   child: Image.asset(
-                    'asset/image/logout.png',
-                    width: 40,
-                    height: 40,
+                    'asset/image/weblogo.png', // Make sure this path matches your asset folder
+                    width: 100,
+                    height: 100,
                     fit: BoxFit.cover,
                   ),
                 ),
-              ],
-            ),
-            Text(
-              'Yours Health, Yours Way!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF6B4518),
-                fontFamily: 'Engagement',  // Make sure your font is declared correctly in pubspec.yaml
-                fontSize: 30,
               ),
-            ),
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0).copyWith(top: 25.0, left: 20.0),
-                  child: Text(
-                    'Pharmacy List',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Crimson',  // Make sure your font is declared correctly in pubspec.yaml
-                      fontSize: 30,
-                    ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'CAREPLUS',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontFamily: 'Crimson',
+                    fontSize: 50,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0).copyWith(top: 32.0, left: 120.0),
-                  child: Text(
-                    'view more',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: const Color(0XFF797979),
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Crimson',  // Make sure your font is declared correctly in pubspec.yaml
-                      fontSize: 20,
-                    ),
-                  ),
+              ),
+
+              //Body
+              Text(
+                'one-stop pharmacy application',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF6B4518),
+                  fontFamily: 'Crimson',
+                  fontStyle: FontStyle.italic,
+                  fontSize: 20,
                 ),
-              ],
-            )
-          ],
+              ),
+
+              SizedBox(height: 50.0),
+
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Builder(
+                  builder: (context) {
+                    return ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/register');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(300, 60),
+                        textStyle: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Crimson',
+                        ),
+                        backgroundColor: const Color(0XFF4B352A),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text('I am New Customer'),
+                    );
+                  }
+                ),
+              ),
+
+              SizedBox(height: 25.0),
+
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Builder(
+                  builder: (context) {
+                    return ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/login');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(300, 60),
+                        textStyle: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Crimson',
+                        ),
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: const Color(0XFF4B352A),
+                        elevation: 0,
+                        side: BorderSide(
+                          color: Color(0XFF4B352A),
+                          width: 2,
+                        ),
+                      ),
+                      child: Text('I am Existing Customer'),
+                    );
+                  }
+                ),
+              ),
+
+              //Admin Verification
+
+              SizedBox(height: 85.0),
+
+              Padding(
+                padding: const EdgeInsets.all(8.0).copyWith(left: 20.0),
+                child: Builder(
+                  builder: (context) {
+                    return GestureDetector(
+                      onTap: () {
+                        print("Tap detected");
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text(
+                                "Are you a staff at Care Plus?",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Crimson',
+                                  color: const Color(0XFF4B352A),
+                                ),
+                              ),
+                              actionsAlignment: MainAxisAlignment.center,
+                              actions: [
+                                ElevatedButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0XFFB5B5B5),
+                                    foregroundColor: Colors.white,
+                                    textStyle: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Crimson',
+                                    ),
+                                  ),
+                                  child: Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        TextEditingController _codeController = TextEditingController();
+                                        String? errorText;
+
+                                        return StatefulBuilder(
+                                          builder: (context, setState) {
+                                            // Add listener to clear error when typing
+                                            _codeController.addListener(() {
+                                              if (errorText != null) {
+                                                setState(() {
+                                                  errorText = null;
+                                                });
+                                              }
+                                            });
+
+                                            return AlertDialog(
+                                              title: Text(
+                                                "Enter Security Code",
+                                                style: TextStyle(
+                                                  fontFamily: 'Crimson',
+                                                  fontWeight: FontWeight.bold,
+                                                  color: const Color(0XFF4B352A),
+                                                  fontSize: 25,
+                                                ),
+                                              ),
+                                              content: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  TextField(
+                                                    controller: _codeController,
+                                                    decoration: InputDecoration(
+                                                      hintText: "Enter code",
+                                                    ),
+                                                    obscureText: true,
+                                                    keyboardType: TextInputType.number,
+                                                  ),
+                                                  if (errorText != null)
+                                                    Padding(
+                                                      padding: const EdgeInsets.only(top: 8.0),
+                                                      child: Text(
+                                                        errorText!,
+                                                        style: TextStyle(
+                                                          color: Colors.red,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                              actions: [
+                                                ElevatedButton(
+                                                  onPressed: () => Navigator.of(context).pop(),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: const Color(0XFFB5B5B5),
+                                                    foregroundColor: Colors.white,
+                                                    textStyle: TextStyle(
+                                                      fontSize: 20,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontFamily: 'Crimson',
+                                                    ),
+                                                  ),
+                                                  child: Text("Cancel"),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    if (_codeController.text == "1234") {
+                                                      Navigator.of(context).pop();
+                                                      Navigator.pushReplacementNamed(context, '/admin_home');
+                                                    } else {
+                                                      setState(() {
+                                                        errorText = "Invalid security code";
+                                                      });
+                                                    }
+                                                  },
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: const Color(0XFF4B352A),
+                                                    foregroundColor: Colors.white,
+                                                    textStyle: TextStyle(
+                                                      fontSize: 20,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontFamily: 'Crimson',
+                                                    ),
+                                                  ),
+                                                  child: Text("Submit"),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0XFF4B352A),
+                                    foregroundColor: Colors.white,
+                                    textStyle: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Crimson',
+                                    ),
+                                  ),
+                                  child: Text("Continue"),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      child: Image.asset(
+                        'asset/image/pharmacy.png',
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -12,8 +12,11 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
-
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{6,}$');
+  bool _obscurePassword = true;
+
+  String?errorText;
   //final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> _loginUser() async {
@@ -31,25 +34,26 @@ class _LoginState extends State<Login> {
         //   'lastLogin': FieldValue.serverTimestamp(),
         // }, SetOptions(merge: true));
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login successful!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Login successful!')));
 
-        Navigator.pushReplacementNamed(context, '/');
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } on FirebaseAuthException catch (e) {
-      String message;
-      if (e.code == 'user-not-found') {
-        message = 'No user found for this email.';
-      } else if (e.code == 'wrong-password') {
-        message = 'Incorrect password.';
-      } else {
-        message = 'Login failed: ${e.message}';
-      }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      setState(() {
+        if (e.code == 'user-not-found') {
+          errorText = 'No user found for this email.';
+        } else if (e.code == 'wrong-password') {
+          errorText = 'Incorrect password.';
+        } else if (e.code == 'invalid-credential') {
+          errorText = 'Incorrect email or password.';
+        } else {
+          // fallback for unexpected codes
+          errorText = 'Login failed: ${e.message}';
+        }
+      });
     }
   }
 
@@ -59,25 +63,29 @@ class _LoginState extends State<Login> {
       appBar: AppBar(backgroundColor: const Color(0xFFC1BFA9)),
       body: Column(
         children: [
+          SizedBox(height: 130.0),
           Padding(
-            padding: const EdgeInsets.all(8.0).copyWith(top: 150.0),
+            padding: const EdgeInsets.all(8.0),
             child: Text(
               'LOGIN',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Color(0xFF6B4518),
-                fontFamily:
-                    'Crimson', // Make sure your font is declared correctly in pubspec.yaml
+                fontFamily: 'Crimson',
                 fontSize: 50,
               ),
             ),
           ),
+
+          SizedBox(height: 15.0),
 
           CustomTextField(
             hintText: 'Email',
             valueController: email,
             onChanged: () {},
           ),
+
+          SizedBox(height: 15.0),
 
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -86,7 +94,7 @@ class _LoginState extends State<Login> {
               height: 60,
               child: TextField(
                 controller: password,
-                obscureText: true,
+                obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   hintText: 'Password',
                   hintStyle: TextStyle(
@@ -103,31 +111,96 @@ class _LoginState extends State<Login> {
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide(color: Colors.white),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.white), // Border when focused
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                 ),
               ),
             ),
           ),
+          if (errorText != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                errorText!,
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+            ),
+
+          SizedBox(height: 15.0),
 
           Padding(
-            padding: const EdgeInsets.all(8.0).copyWith(top: 30.0),
+            padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
               onPressed: () {
+
+                if (email.text.isEmpty && password.text.isEmpty) {
+                  setState(() {
+                    errorText = "Please enter your email address and password.";
+                  });
+                  return;
+                } else if (email.text.isEmpty) {
+                  setState(() {
+                    errorText = "Please enter your email address.";
+                  });
+                  return;
+                } else if (password.text.isEmpty) {
+                  setState(() {
+                    errorText = "Please enter your password.";
+                  });
+                  return;
+                }
+                bool isValidEmail = RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                    .hasMatch(email.text);
+                if (!isValidEmail) {
+                  setState(() {
+                    errorText = "Please enter a valid email address.";
+                  });
+                  return;
+                }
+
+                bool isValidPassword = passwordRegex.hasMatch(password.text);
+
+                if (!isValidPassword ) {
+                  setState(() {
+                    errorText = "Password must be at least 6 characters and include uppercase, lowercase, and a symbol.";
+                  });
+                  return;
+                }
+
+                setState(() {
+                  errorText = null;
+                });
                 _loginUser();
-                setState(() {});// Handle login button tap
+
               },
               style: ElevatedButton.styleFrom(
-                minimumSize: Size(200, 60), // width: 200, height: 50
+                minimumSize: Size(200, 60),
                 textStyle: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'Crimson',
                 ),
-                backgroundColor: const Color(0XFFA8A692), // Background color
+                backgroundColor: const Color(0XFF4B352A),
                 foregroundColor: Colors.white,
               ),
               child: Text('Login'),
             ),
           ),
+
+          SizedBox(height: 15.0),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -138,13 +211,15 @@ class _LoginState extends State<Login> {
                   "Don't have account?",
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF6B4518),
-                    fontFamily:
-                        'Crimson', // Make sure your font is declared correctly in pubspec.yaml
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Crimson',
                     fontSize: 20,
                   ),
                 ),
               ),
+
+              //Register
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Builder(
@@ -159,9 +234,8 @@ class _LoginState extends State<Login> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Color(0xFF6B4518),
-                            decoration: TextDecoration.underline,
-                            fontFamily:
-                                'Crimson', // Make sure your font is declared correctly in pubspec.yaml
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Crimson',
                             fontSize: 20,
                           ),
                         ),
@@ -169,6 +243,30 @@ class _LoginState extends State<Login> {
                 ),
               ),
             ],
+          ),
+
+          //Forgot Password
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Builder(
+              builder:
+                  (context) => GestureDetector(
+                    onTap: () {
+                      print("Tapped");
+                      Navigator.pushNamed(context, '/forgot_password');
+                    },
+                    child: Text(
+                      'Forgot Password',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF6B4518),
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Crimson',
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+            ),
           ),
         ],
       ),

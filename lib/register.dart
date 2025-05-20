@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'CustomTextField.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 
 class Register extends StatefulWidget {
   const Register({Key? key}) : super(key: key);
@@ -21,14 +22,48 @@ class _RegisterState extends State<Register> {
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
   final TextEditingController address = TextEditingController();
-
+  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+  final passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{6,}$');
   bool _agreeToTerms = false;
+  bool _obscurePassword = true;
+
+  String? errorText;
 
   Future<void> _registerUser() async {
+    bool isValidEmail = emailRegex.hasMatch(email.text);
+    bool isValidPassword = passwordRegex.hasMatch(password.text);
+
+    if (name.text.isEmpty ||
+        birthDate.text.isEmpty ||
+        ic.text.isEmpty ||
+        contact.text.isEmpty ||
+        email.text.isEmpty ||
+        password.text.isEmpty ||
+        address.text.isEmpty) {
+      setState(() {
+        errorText = "Please fill in all fields.";
+      });
+      return;
+    }
+
+    if (!isValidEmail) {
+      setState(() {
+        errorText = "Please enter a valid email address.";
+      });
+      return;
+    }
+
+    if (!isValidPassword ) {
+      setState(() {
+        errorText = "Password must be at least 6 characters and include uppercase, lowercase, and a symbol.";
+      });
+      return;
+    }
+
     if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please agree to the terms and conditions.')),
-      );
+      setState(() {
+        errorText = "Please agree to the terms and conditions.";
+      });
       return;
     }
 
@@ -56,12 +91,32 @@ class _RegisterState extends State<Register> {
           context,
         ).showSnackBar(SnackBar(content: Text('Registration successful!')));
 
-        Navigator.pushReplacementNamed(context, '/'); // Go to home screen
+        Navigator.pushReplacementNamed(context, '/home'); // Go to home screen
       }
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
+      print('Error: ${e.message}');
+    }
+
+    TextEditingValue formatEditUpdate(
+        TextEditingValue oldValue,
+        TextEditingValue newValue,
+        ) {
+      String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+      String formatted = '';
+
+      for (int i = 0; i < digitsOnly.length && i < 12; i++) {
+        formatted += digitsOnly[i];
+        if (i == 5 || i == 7) {
+          formatted += '-';
+        }
+      }
+
+      // Handle cursor position
+      int selectionIndex = formatted.length;
+      return TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: selectionIndex),
+      );
     }
   }
 
@@ -79,18 +134,20 @@ class _RegisterState extends State<Register> {
               style: TextStyle(
                 color: Color(0xFF6B4518),
                 fontFamily:
-                    'Crimson', // Make sure your font is declared correctly in pubspec.yaml
+                    'Crimson',
                 fontSize: 50,
               ),
             ),
           ),
 
+          //Name
           CustomTextField(
             hintText: 'Name',
             valueController: name,
             onChanged: () {},
           ),
 
+          //Birth Date
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Container(
@@ -98,7 +155,7 @@ class _RegisterState extends State<Register> {
               height: 60,
               child: TextField(
                 controller: birthDate,
-                readOnly: true, // Prevents keyboard from showing
+                readOnly: true,
                 onTap: () async {
                   DateTime? date = await showDatePicker(
                     context: context,
@@ -126,30 +183,102 @@ class _RegisterState extends State<Register> {
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide(color: Colors.white),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.white), // Border when focused
+                  ),
                   suffixIcon: Icon(Icons.calendar_month, color: Colors.grey),
                 ),
               ),
             ),
           ),
 
-          CustomTextField(
-            hintText: 'Identity Card Number (last 4 digit)',
-            valueController: ic,
-            onChanged: () {},
+          //IC
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              width: 382,
+              height: 60,
+              child: TextField(
+                controller: ic,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  ICInputFormat(),
+                  LengthLimitingTextInputFormatter(14),
+                ],
+                decoration: InputDecoration(
+                  hintText: 'NRIC/MYKAD',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[500],
+                    fontStyle: FontStyle.italic,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.white), // Border when focused
+                  ),
+
+                ),
+              ),
+            ),
           ),
 
-          CustomTextField(
-            hintText: 'Contact',
-            valueController: contact,
-            onChanged: () {},
+          //Contact
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              width: 382,
+              height: 60,
+              child: TextField(
+                controller: contact,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  ContactInputFormat(),
+                  LengthLimitingTextInputFormatter(14),
+                ],
+                decoration: InputDecoration(
+                  hintText: 'Contact No',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[500],
+                    fontStyle: FontStyle.italic,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.white), // Border when focused
+                  ),
+
+                ),
+              ),
+            ),
           ),
 
+          //Email
           CustomTextField(
             hintText: 'Email',
             valueController: email,
             onChanged: () {},
           ),
 
+          //Password
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Container(
@@ -157,7 +286,7 @@ class _RegisterState extends State<Register> {
               height: 60,
               child: TextField(
                 controller: password,
-                obscureText: true,
+                obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   hintText: 'Password',
                   hintStyle: TextStyle(
@@ -174,45 +303,33 @@ class _RegisterState extends State<Register> {
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide(color: Colors.white),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide(color: Colors.white), // Border when focused
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
                 ),
               ),
             ),
           ),
 
+          //Address
           CustomTextField(
             hintText: 'Address',
             valueController: address,
             onChanged: () {},
           ),
 
-          // Padding(
-          //   padding: const EdgeInsets.all(8.0),
-          //   child: Container(
-          //     width: 380,
-          //     height: 60,
-          //     child: TextField(
-          //       decoration: InputDecoration(
-          //         hintText: 'Address',
-          //         hintStyle: TextStyle(
-          //           color: Colors.grey[500],
-          //           fontStyle: FontStyle.italic,
-          //         ),
-          //         filled: true,
-          //         fillColor: Colors.white,
-          //         contentPadding: EdgeInsets.symmetric(
-          //           horizontal: 16,
-          //           vertical: 16,
-          //         ), // Padding
-          //         enabledBorder: OutlineInputBorder(
-          //           borderRadius: BorderRadius.circular(30),
-          //         ),
-          //         focusedBorder: OutlineInputBorder(
-          //           borderRadius: BorderRadius.circular(12),
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-          // ),
           Row(
             children: [
               Padding(
@@ -251,9 +368,7 @@ class _RegisterState extends State<Register> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Color(0xFF6B4518),
-                                  decoration:
-                                      TextDecoration
-                                          .underline, // optional underline
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -274,9 +389,7 @@ class _RegisterState extends State<Register> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Color(0xFF6B4518),
-                                  decoration:
-                                      TextDecoration
-                                          .underline, // optional underline
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -287,52 +400,202 @@ class _RegisterState extends State<Register> {
               ),
             ],
           ),
+
+          if (errorText != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0).copyWith(left:30.0, right: 30.0),
+              child: Text(
+                errorText!,
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
           Padding(
-            padding: const EdgeInsets.all(8.0).copyWith(top: 19.0),
+            padding: const EdgeInsets.all(8.0).copyWith(top: 15.0),
             child: ElevatedButton(
               onPressed: () {
                 _registerUser();
                 setState(() {});
               },
               style: ElevatedButton.styleFrom(
-                minimumSize: Size(200, 60), // width: 200, height: 50
+                minimumSize: Size(200, 50), // width: 200, height: 50
                 textStyle: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'Crimson',
                 ),
-                backgroundColor: const Color(0XFFA8A692), // Background color
+                backgroundColor: const Color(0xFF6B4518), // Background color
                 foregroundColor: Colors.white,
               ),
               child: Text('Register'),
             ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Builder(
-              builder:
-                  (context) => GestureDetector(
-                    onTap: () {
-                      print("Tapped");
-                      Navigator.pushNamed(context, '/login');
-                    },
-                    child: Text(
-                      'Login',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF6B4518),
-                        decoration: TextDecoration.underline,
-                        fontFamily:
-                            'Crimson', // Make sure your font is declared correctly in pubspec.yaml
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-            ),
-          ),
+          // Builder(
+          //   builder:
+          //       (context) => GestureDetector(
+          //     onTap: () {
+          //       print("Tapped");
+          //       Navigator.pushNamed(context, '/login');
+          //     },
+          //     child: Text(
+          //       'Login',
+          //       textAlign: TextAlign.center,
+          //       style: TextStyle(
+          //         color: Color(0xFF6B4518),
+          //         decoration: TextDecoration.underline,
+          //         fontFamily:
+          //         'Crimson', // Make sure your font is declared correctly in pubspec.yaml
+          //         fontSize: 20,
+          //       ),
+          //     ),
+          //   ),
+
+          // Padding(
+          //   padding: const EdgeInsets.all(8.0),
+          //   child: Builder(
+          //     builder:
+          //         (context) => GestureDetector(
+          //           onTap: () {
+          //             print("Tapped");
+          //             Navigator.pushNamed(context, '/login');
+          //           },
+          //           child: Text(
+          //             'Login',
+          //             textAlign: TextAlign.center,
+          //             style: TextStyle(
+          //               color: Color(0xFF6B4518),
+          //               decoration: TextDecoration.underline,
+          //               fontFamily:
+          //                   'Crimson', // Make sure your font is declared correctly in pubspec.yaml
+          //               fontSize: 20,
+          //             ),
+          //           ),
+          //         ),
+          //   ),
+          // ),
         ],
       ),
     );
   }
 }
+
+class ICInputFormat extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue,
+      TextEditingValue newValue,
+      ) {
+    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    String formatted = '';
+
+    if (digitsOnly.length > 12) {
+      digitsOnly = digitsOnly.substring(0, 12);
+    }
+
+    for (int i = 0; i < digitsOnly.length && i < 12; i++) {
+      formatted += digitsOnly[i];
+      if (i == 5 || i == 7) {
+        formatted += '-';
+      }
+    }
+
+    // Count digits before the original cursor position
+    int digitsBeforeCursor = 0;
+    for (int i = 0; i < newValue.selection.end; i++) {
+      if (i < newValue.text.length && RegExp(r'\d').hasMatch(newValue.text[i])) {
+        digitsBeforeCursor++;
+      }
+    }
+    // Map digitsBeforeCursor to the formatted string index
+    int cursorPos = 0;
+    int digitsCounted = 0;
+    while (cursorPos < formatted.length && digitsCounted < digitsBeforeCursor) {
+      if (RegExp(r'\d').hasMatch(formatted[cursorPos])) {
+        digitsCounted++;
+      }
+      cursorPos++;
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: cursorPos),
+    );
+
+  }
+}
+
+class ContactInputFormat extends TextInputFormatter {
+  final String? forcedPattern;
+
+  ContactInputFormat({this.forcedPattern});
+
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue,
+      TextEditingValue newValue,
+      ) {
+    // Extract digits only from new input
+    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    String formatted = '';
+    int maxLength;
+    String pattern;
+
+    // Decide which pattern to use
+    if (forcedPattern != null) {
+      pattern = forcedPattern!;
+    } else {
+      pattern = digitsOnly.length > 10 ? 'pattern2' : 'pattern1';
+    }
+
+    if (pattern == 'pattern1') {
+      maxLength = 10;
+      for (int i = 0; i < digitsOnly.length && i < maxLength; i++) {
+        formatted += digitsOnly[i];
+        if (i == 2 || i == 5) {
+          if (i != maxLength - 1) formatted += '-';
+        }
+      }
+    } else if (pattern == 'pattern2') {
+      maxLength = 11;
+      for (int i = 0; i < digitsOnly.length && i < maxLength; i++) {
+        formatted += digitsOnly[i];
+        if (i == 2 || i == 6) {
+          if (i != maxLength - 1) formatted += '-';
+        }
+      }
+    } else {
+      formatted = digitsOnly;
+    }
+
+    // Count digits before the original cursor position
+    int digitsBeforeCursor = 0;
+    for (int i = 0; i < newValue.selection.end; i++) {
+      if (i < newValue.text.length && RegExp(r'\d').hasMatch(newValue.text[i])) {
+        digitsBeforeCursor++;
+      }
+    }
+    // Map digitsBeforeCursor to the formatted string index
+    int cursorPos = 0;
+    int digitsCounted = 0;
+    while (cursorPos < formatted.length && digitsCounted < digitsBeforeCursor) {
+      if (RegExp(r'\d').hasMatch(formatted[cursorPos])) {
+        digitsCounted++;
+      }
+      cursorPos++;
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: cursorPos),
+    );
+
+  }
+}
+
+
+
+
+
