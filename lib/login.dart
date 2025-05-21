@@ -29,10 +29,6 @@ class _LoginState extends State<Login> {
       User? user = userCredential.user;
 
       if (user != null) {
-        // // Optionally update last login info in Firestore
-        // await _firestore.collection('users').doc(user.uid).set({
-        //   'lastLogin': FieldValue.serverTimestamp(),
-        // }, SetOptions(merge: true));
 
         ScaffoldMessenger.of(
           context,

@@ -3,6 +3,8 @@ import 'CustomTextField.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 class Register extends StatefulWidget {
   const Register({Key? key}) : super(key: key);
@@ -26,8 +28,11 @@ class _RegisterState extends State<Register> {
   final passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{6,}$');
   bool _agreeToTerms = false;
   bool _obscurePassword = true;
-
   String? errorText;
+
+  String hashValue(String input) {
+    return sha256.convert(utf8.encode(input.trim())).toString();
+  }
 
   Future<void> _registerUser() async {
     bool isValidEmail = emailRegex.hasMatch(email.text);
@@ -83,8 +88,8 @@ class _RegisterState extends State<Register> {
           'icNumber': ic.text.trim(),
           'contact': contact.text.trim(),
           'email': email.text.trim(),
+          'password': hashValue(password.text),
           'address': address.text.trim(),
-          'createdAt': FieldValue.serverTimestamp(),
         });
 
         ScaffoldMessenger.of(

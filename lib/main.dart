@@ -1,5 +1,6 @@
 import 'package:careplusapp/forgot_password.dart';
 import 'package:careplusapp/privacy_policy.dart';
+import 'package:careplusapp/profile.dart';
 import 'package:careplusapp/terms_condition.dart';
 import 'package:flutter/material.dart';
 import 'login.dart';
@@ -41,6 +42,7 @@ class _MyAppState extends State<MyApp> {
         '/terms_condition': (context) => TermsCondition(),
         '/privacy_policy': (context) => PrivacyPolicy(),
         '/forgot_password': (context) => ForgotPassword(),
+        '/profile':(context) => Profile(),
       },
       home: Scaffold(
         backgroundColor: const Color(0xFFC1BFA9),

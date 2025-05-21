@@ -38,7 +38,7 @@ class _MyAppState extends State<Home> {
                     builder: (context) => GestureDetector(
                       onTap: () {
                         print("Tapped");
-                        Navigator.pushReplacementNamed(context, '/login');
+                        Navigator.pushReplacementNamed(context, '/profile');
                       },
                       child: Image.asset(
                         'asset/image/user.png',
