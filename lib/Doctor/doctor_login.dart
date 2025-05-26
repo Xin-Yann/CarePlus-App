@@ -1,25 +1,59 @@
 import 'package:flutter/material.dart';
-import 'CustomTextField.dart';
+import '../CustomTextField.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class Login extends StatefulWidget {
-  const Login({Key? key}) : super(key: key);
+class DoctorLogin extends StatefulWidget {
+  const DoctorLogin({Key? key}) : super(key: key);
 
   @override
-  State<Login> createState() => _LoginState();
+  State<DoctorLogin> createState() => _LoginDoctor();
 }
 
-class _LoginState extends State<Login> {
+class _LoginDoctor extends State<DoctorLogin> {
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
   final passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{6,}$');
   bool _obscurePassword = true;
 
   String? errorText;
   //final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> _loginUser() async {
+  Future<void> _loginDoctor() async {
+    bool isValidEmail = emailRegex.hasMatch(email.text);
+    bool isValidPassword = passwordRegex.hasMatch(password.text);
+    bool isDoctorEmail = email.text.trim().endsWith('@doctor.com');
+
+    if (email.text.isEmpty || password.text.isEmpty) {
+      setState(() {
+        errorText = "Please fill in all fields.";
+      });
+      return;
+    }
+
+    if (!isDoctorEmail) {
+      setState(() {
+        errorText = "Only emails ending in @doctor.com are allowed.";
+      });
+      return;
+    }
+
+    if (!isValidEmail) {
+      setState(() {
+        errorText = "Please enter a valid email address.";
+      });
+      return;
+    }
+
+    if (!isValidPassword) {
+      setState(() {
+        errorText =
+            "Password must be at least 6 characters and include uppercase, lowercase, and a symbol.";
+      });
+      return;
+    }
+
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: email.text.trim(),
@@ -33,7 +67,7 @@ class _LoginState extends State<Login> {
           context,
         ).showSnackBar(SnackBar(content: Text('Login successful!')));
 
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/doctor_home');
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -72,11 +106,10 @@ class _LoginState extends State<Login> {
               ),
             ),
             SizedBox(height: 80.0),
-
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                'LOGIN',
+                'DOCTOR LOGIN',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color(0xFF6B4518),
@@ -199,7 +232,7 @@ class _LoginState extends State<Login> {
                   setState(() {
                     errorText = null;
                   });
-                  _loginUser();
+                  _loginDoctor();
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(200, 60),
@@ -242,7 +275,7 @@ class _LoginState extends State<Login> {
                         (context) => GestureDetector(
                           onTap: () {
                             print("Tapped");
-                            Navigator.pushNamed(context, '/register');
+                            Navigator.pushNamed(context, '/doctor_register');
                           },
                           child: Text(
                             'Register',

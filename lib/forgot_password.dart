@@ -23,7 +23,8 @@ class _ForgotPasswordSate extends State<ForgotPassword> {
         await _auth.sendPasswordResetEmail(email: email.text.trim());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Password reset email sent. Check your inbox.')),
+            content: Text('Password reset email sent. Check your inbox.'),
+          ),
         );
         Navigator.pushNamed(context, '/login'); // Return to login page
       } on FirebaseAuthException catch (e) {
@@ -34,21 +35,29 @@ class _ForgotPasswordSate extends State<ForgotPassword> {
           message = 'Error: ${e.message}';
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     }
   }
 
-
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFC1BFA9),
-      appBar: AppBar(backgroundColor: const Color(0xFFC1BFA9)),
+      backgroundColor: const Color(0xFFE1D9D0),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFE1D9D0),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/login');
+          },
+          icon: Icon(Icons.arrow_back_ios_new_rounded),
+        ),
+      ),
       body: Form(
         key: _formKey,
-        child: SingleChildScrollView( // Optional: prevent overflow
+        child: SingleChildScrollView(
+          // Optional: prevent overflow
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -94,8 +103,9 @@ class _ForgotPasswordSate extends State<ForgotPassword> {
                         });
                         return;
                       }
-                      bool isValidEmail = RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                          .hasMatch(email.text);
+                      bool isValidEmail = RegExp(
+                        r'^[^@]+@[^@]+\.[^@]+',
+                      ).hasMatch(email.text);
                       if (!isValidEmail) {
                         setState(() {
                           errorText = "Please enter a valid email address.";

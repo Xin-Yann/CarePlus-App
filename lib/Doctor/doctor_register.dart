@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'CustomTextField.dart';
+import '../CustomTextField.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
-class Register extends StatefulWidget {
-  const Register({Key? key}) : super(key: key);
+class DoctorRegister extends StatefulWidget {
+  const DoctorRegister({Key? key}) : super(key: key);
 
   @override
-  State<Register> createState() => _RegisterState();
+  State<DoctorRegister> createState() => _RegisterDoctor();
 }
 
-class _RegisterState extends State<Register> {
+class _RegisterDoctor extends State<DoctorRegister> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -37,16 +37,21 @@ class _RegisterState extends State<Register> {
   Future<void> _registerUser() async {
     bool isValidEmail = emailRegex.hasMatch(email.text);
     bool isValidPassword = passwordRegex.hasMatch(password.text);
+    bool isDoctorEmail = email.text.trim().endsWith('@doctor.com');
 
     if (name.text.isEmpty ||
-        birthDate.text.isEmpty ||
-        ic.text.isEmpty ||
         contact.text.isEmpty ||
         email.text.isEmpty ||
-        password.text.isEmpty ||
-        address.text.isEmpty) {
+        password.text.isEmpty) {
       setState(() {
         errorText = "Please fill in all fields.";
+      });
+      return;
+    }
+
+    if (!isDoctorEmail) {
+      setState(() {
+        errorText = "Only emails ending in @doctor.com are allowed.";
       });
       return;
     }
@@ -83,21 +88,21 @@ class _RegisterState extends State<Register> {
       User? user = userCredential.user;
 
       if (user != null) {
-        await _firestore.collection('users').doc(user.uid).set({
+        await _firestore.collection('doctors').doc(user.uid).set({
           'name': name.text.trim(),
-          'birthDate': birthDate.text.trim(),
-          'icNumber': ic.text.trim(),
-          'contact': contact.text.trim(),
           'email': email.text.trim(),
           'password': hashValue(password.text),
-          'address': address.text.trim(),
+          'contact': contact.text.trim(),
         });
 
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Registration successful!')));
 
-        Navigator.pushReplacementNamed(context, '/home'); // Go to home screen
+        Navigator.pushReplacementNamed(
+          context,
+          '/doctor_home',
+        ); // Go to home screen
       }
     } on FirebaseAuthException catch (e) {
       print('Error: ${e.message}');
@@ -146,153 +151,37 @@ class _RegisterState extends State<Register> {
                 ],
               ),
             ),
-
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'REGISTER',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF6B4518),
-                  fontFamily: 'Crimson',
-                  fontSize: 50,
+            SizedBox(height: 50.0),
+            Column(
+              children: [
+                Text(
+                  'DOCTOR',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontFamily: 'Crimson',
+                    fontSize: 50,
+                  ),
                 ),
-              ),
+                Text(
+                  'REGISTER',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontFamily: 'Crimson',
+                    fontSize: 50,
+                  ),
+                ),
+              ],
             ),
+
+            SizedBox(height: 25.0,),
 
             //Name
             CustomTextField(
               hintText: 'Name',
               valueController: name,
               onChanged: () {},
-            ),
-
-            //Birth Date
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                width: 382,
-                height: 60,
-                child: TextField(
-                  controller: birthDate,
-                  readOnly: true,
-                  onTap: () async {
-                    DateTime? date = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2090),
-                    );
-                    if (date != null) {
-                      birthDate.text = date.toString().substring(0, 10);
-                    }
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Birth Date',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[500],
-                      fontStyle: FontStyle.italic,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(color: Colors.white),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(
-                        color: Colors.white,
-                      ), // Border when focused
-                    ),
-                    suffixIcon: Icon(Icons.calendar_month, color: Colors.grey),
-                  ),
-                ),
-              ),
-            ),
-
-            //IC
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                width: 382,
-                height: 60,
-                child: TextField(
-                  controller: ic,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    ICInputFormat(),
-                    LengthLimitingTextInputFormatter(14),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: 'NRIC/MYKAD',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[500],
-                      fontStyle: FontStyle.italic,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(color: Colors.white),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(
-                        color: Colors.white,
-                      ), // Border when focused
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            //Contact
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                width: 382,
-                height: 60,
-                child: TextField(
-                  controller: contact,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    ContactInputFormat(),
-                    LengthLimitingTextInputFormatter(14),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: 'Contact No',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[500],
-                      fontStyle: FontStyle.italic,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(color: Colors.white),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(
-                        color: Colors.white,
-                      ), // Border when focused
-                    ),
-                  ),
-                ),
-              ),
             ),
 
             //Email
@@ -351,14 +240,47 @@ class _RegisterState extends State<Register> {
               ),
             ),
 
-            //Address
-            CustomTextField(
-              hintText: 'Address',
-              valueController: address,
-              onChanged: () {},
+            //Contact
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                width: 382,
+                height: 60,
+                child: TextField(
+                  controller: contact,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    ContactInputFormat(),
+                    LengthLimitingTextInputFormatter(14),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: 'Contact No',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[500],
+                      fontStyle: FontStyle.italic,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(
+                        color: Colors.white,
+                      ), // Border when focused
+                    ),
+                  ),
+                ),
+              ),
             ),
 
-            SizedBox(height: 25.0,),
+            SizedBox(height: 20.0,),
 
             Row(
               children: [
@@ -373,7 +295,6 @@ class _RegisterState extends State<Register> {
                     },
                   ),
                 ),
-
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start, // align left
                   children: [
@@ -491,77 +412,32 @@ class _RegisterState extends State<Register> {
             //     ),
             //   ),
 
-            // Padding(
-            //   padding: const EdgeInsets.all(8.0),
-            //   child: Builder(
-            //     builder:
-            //         (context) => GestureDetector(
-            //           onTap: () {
-            //             print("Tapped");
-            //             Navigator.pushNamed(context, '/login');
-            //           },
-            //           child: Text(
-            //             'Login',
-            //             textAlign: TextAlign.center,
-            //             style: TextStyle(
-            //               color: Color(0xFF6B4518),
-            //               decoration: TextDecoration.underline,
-            //               fontFamily:
-            //                   'Crimson', // Make sure your font is declared correctly in pubspec.yaml
-            //               fontSize: 20,
-            //             ),
-            //           ),
-            //         ),
-            //   ),
-            // ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Builder(
+                builder:
+                    (context) => GestureDetector(
+                      onTap: () {
+                        print("Tapped");
+                        Navigator.pushNamed(context, '/doctor_login');
+                      },
+                      child: Text(
+                        'Doctor Login',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF6B4518),
+                          decoration: TextDecoration.underline,
+                          fontFamily:
+                              'Crimson', // Make sure your font is declared correctly in pubspec.yaml
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+              ),
+            ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class ICInputFormat extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    String formatted = '';
-
-    if (digitsOnly.length > 12) {
-      digitsOnly = digitsOnly.substring(0, 12);
-    }
-
-    for (int i = 0; i < digitsOnly.length && i < 12; i++) {
-      formatted += digitsOnly[i];
-      if (i == 5 || i == 7) {
-        formatted += '-';
-      }
-    }
-
-    // Count digits before the original cursor position
-    int digitsBeforeCursor = 0;
-    for (int i = 0; i < newValue.selection.end; i++) {
-      if (i < newValue.text.length &&
-          RegExp(r'\d').hasMatch(newValue.text[i])) {
-        digitsBeforeCursor++;
-      }
-    }
-    // Map digitsBeforeCursor to the formatted string index
-    int cursorPos = 0;
-    int digitsCounted = 0;
-    while (cursorPos < formatted.length && digitsCounted < digitsBeforeCursor) {
-      if (RegExp(r'\d').hasMatch(formatted[cursorPos])) {
-        digitsCounted++;
-      }
-      cursorPos++;
-    }
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: cursorPos),
     );
   }
 }

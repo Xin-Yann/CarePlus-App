@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'footer.dart';
+import 'package:careplusapp/Doctor/doctor_footer.dart';
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class DoctorHome extends StatefulWidget {
+  const DoctorHome({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  State<DoctorHome> createState() => _DoctorHomeState();
 }
 
-class _HomeState extends State<Home> {
+class _DoctorHomeState extends State<DoctorHome> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   void initState() {
@@ -55,17 +55,17 @@ class _HomeState extends State<Home> {
                   child: Builder(
                     builder:
                         (context) => GestureDetector(
-                          onTap: () {
-                            print("Tapped");
-                            Navigator.pushReplacementNamed(context, '/cart');
-                          },
-                          child: Image.asset(
-                            'asset/image/cart.png',
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                      onTap: () {
+                        print("Tapped");
+                        Navigator.pushReplacementNamed(context, '/cart');
+                      },
+                      child: Image.asset(
+                        'asset/image/cart.png',
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                 ),
 
@@ -76,32 +76,24 @@ class _HomeState extends State<Home> {
                   child: Builder(
                     builder:
                         (context) => GestureDetector(
-                          onTap: () async {
-                            await FirebaseAuth.instance.signOut();
-                            Navigator.pushReplacementNamed(context, '/');
-                            print("User signed out");
-                          },
-                          child: Image.asset(
-                            'asset/image/exit.png',
-                            width: 33,
-                            height: 33,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                      onTap: () async {
+                        await FirebaseAuth.instance.signOut();
+                        Navigator.pushReplacementNamed(context, '/doctor_login');
+                        print("Doctor signed out");
+                      },
+                      child: Image.asset(
+                        'asset/image/exit.png',
+                        width: 33,
+                        height: 33,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
             SizedBox(height: 20.0),
-            Text(
-              'Yours Health, Yours Way!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF6B4518),
-                fontFamily: 'Engagement',
-                fontSize: 30,
-              ),
-            ),
+
             Row(
               children: [
                 Padding(
@@ -157,7 +149,7 @@ class _HomeState extends State<Home> {
           ],
         ),
       ),
-      bottomNavigationBar: const Footer(),
+      bottomNavigationBar: const DoctorFooter(),
     );
   }
 }

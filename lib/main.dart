@@ -1,12 +1,21 @@
+import 'package:careplusapp/chat_with_us.dart';
 import 'package:careplusapp/forgot_password.dart';
 import 'package:careplusapp/privacy_policy.dart';
 import 'package:careplusapp/profile.dart';
 import 'package:careplusapp/terms_condition.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'login.dart';
 import 'register.dart';
 import 'home.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'cart.dart';
+import 'chat_user.dart';
+import 'package:careplusapp/Doctor/doctor_login.dart';
+import 'package:careplusapp/Doctor/doctor_register.dart';
+import 'package:careplusapp/Doctor/doctor_home.dart';
+import 'package:careplusapp/Doctor/chat_patient.dart';
+import 'package:careplusapp/Doctor/chat_with_patient.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +43,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: '/',
+      // initialRoute: '/',
       routes: {
         '/home': (context) => Home(),
         '/login': (context) => Login(),
@@ -43,27 +52,19 @@ class _MyAppState extends State<MyApp> {
         '/privacy_policy': (context) => PrivacyPolicy(),
         '/forgot_password': (context) => ForgotPassword(),
         '/profile':(context) => Profile(),
+        '/cart':(context) => Cart(),
+        '/doctor_login':(context) => DoctorLogin(),
+        '/doctor_register':(context) => DoctorRegister(),
+        '/doctor_home':(context) => DoctorHome(),
+
       },
       home: Scaffold(
-        backgroundColor: const Color(0xFFC1BFA9),
+        backgroundColor: const Color(0xFFE1D9D0),
         body: Center(
           child: Column(
             children: [
               //Header
               SizedBox(height: 115.0),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  'Welcome to',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF6B4518),
-                    fontFamily: 'Crimson',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 30,
-                  ),
-                ),
-              ),
               Padding(
                 padding: const EdgeInsets.all(
                   8.0,
@@ -74,10 +75,23 @@ class _MyAppState extends State<MyApp> {
                     setState(() {});
                   },
                   child: Image.asset(
-                    'asset/image/weblogo.png', // Make sure this path matches your asset folder
+                    'asset/image/weblogo.png',
                     width: 100,
                     height: 100,
                     fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Welcome to',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontFamily: 'Crimson',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30,
                   ),
                 ),
               ),
@@ -96,7 +110,7 @@ class _MyAppState extends State<MyApp> {
 
               //Body
               Text(
-                'one-stop pharmacy application',
+                'one-stop healthcare application',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color(0xFF6B4518),
@@ -167,164 +181,329 @@ class _MyAppState extends State<MyApp> {
 
               SizedBox(height: 85.0),
 
-              Padding(
-                padding: const EdgeInsets.all(8.0).copyWith(left: 20.0),
-                child: Builder(
-                  builder: (context) {
-                    return GestureDetector(
-                      onTap: () {
-                        print("Tap detected");
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Text(
-                                "Are you a staff at Care Plus?",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Crimson',
-                                  color: const Color(0XFF4B352A),
-                                ),
-                              ),
-                              actionsAlignment: MainAxisAlignment.center,
-                              actions: [
-                                ElevatedButton(
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0XFFB5B5B5),
-                                    foregroundColor: Colors.white,
-                                    textStyle: TextStyle(
-                                      fontSize: 20,
+              //Doctor Portal
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0).copyWith(left: 20.0),
+                    child: Builder(
+                      builder: (context) {
+                        return GestureDetector(
+                          onTap: () {
+                            print("Tap detected");
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text(
+                                    "Are you a doctor at Care Plus?",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 25,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'Crimson',
+                                      color: const Color(0XFF4B352A),
                                     ),
                                   ),
-                                  child: Text('Cancel'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        TextEditingController _codeController = TextEditingController();
-                                        String? errorText;
+                                  actionsAlignment: MainAxisAlignment.center,
+                                  actions: [
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0XFFB5B5B5),
+                                        foregroundColor: Colors.white,
+                                        textStyle: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Crimson',
+                                        ),
+                                      ),
+                                      child: Text('Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            TextEditingController _codeController = TextEditingController();
+                                            String? errorText;
 
-                                        return StatefulBuilder(
-                                          builder: (context, setState) {
-                                            // Add listener to clear error when typing
-                                            _codeController.addListener(() {
-                                              if (errorText != null) {
-                                                setState(() {
-                                                  errorText = null;
+                                            return StatefulBuilder(
+                                              builder: (context, setState) {
+                                                // Add listener to clear error when typing
+                                                _codeController.addListener(() {
+                                                  if (errorText != null) {
+                                                    setState(() {
+                                                      errorText = null;
+                                                    });
+                                                  }
                                                 });
-                                              }
-                                            });
 
-                                            return AlertDialog(
-                                              title: Text(
-                                                "Enter Security Code",
-                                                style: TextStyle(
-                                                  fontFamily: 'Crimson',
-                                                  fontWeight: FontWeight.bold,
-                                                  color: const Color(0XFF4B352A),
-                                                  fontSize: 25,
-                                                ),
-                                              ),
-                                              content: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  TextField(
-                                                    controller: _codeController,
-                                                    decoration: InputDecoration(
-                                                      hintText: "Enter code",
+                                                return AlertDialog(
+                                                  title: Text(
+                                                    "Enter Security Code",
+                                                    style: TextStyle(
+                                                      fontFamily: 'Crimson',
+                                                      fontWeight: FontWeight.bold,
+                                                      color: const Color(0XFF4B352A),
+                                                      fontSize: 25,
                                                     ),
-                                                    obscureText: true,
-                                                    keyboardType: TextInputType.number,
                                                   ),
-                                                  if (errorText != null)
-                                                    Padding(
-                                                      padding: const EdgeInsets.only(top: 8.0),
-                                                      child: Text(
-                                                        errorText!,
-                                                        style: TextStyle(
-                                                          color: Colors.red,
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      TextField(
+                                                        controller: _codeController,
+                                                        decoration: InputDecoration(
+                                                          hintText: "Enter code",
+                                                        ),
+                                                        obscureText: true,
+                                                        keyboardType: TextInputType.number,
+                                                      ),
+                                                      if (errorText != null)
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(top: 8.0),
+                                                          child: Text(
+                                                            errorText!,
+                                                            style: TextStyle(
+                                                              color: Colors.red,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    ElevatedButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: const Color(0XFFB5B5B5),
+                                                        foregroundColor: Colors.white,
+                                                        textStyle: TextStyle(
+                                                          fontSize: 20,
                                                           fontWeight: FontWeight.bold,
+                                                          fontFamily: 'Crimson',
                                                         ),
                                                       ),
+                                                      child: Text("Cancel"),
                                                     ),
-                                                ],
-                                              ),
-                                              actions: [
-                                                ElevatedButton(
-                                                  onPressed: () => Navigator.of(context).pop(),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: const Color(0XFFB5B5B5),
-                                                    foregroundColor: Colors.white,
-                                                    textStyle: TextStyle(
-                                                      fontSize: 20,
-                                                      fontWeight: FontWeight.bold,
-                                                      fontFamily: 'Crimson',
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        if (_codeController.text == "1234") {
+                                                          Navigator.of(context).pop();
+                                                          Navigator.pushReplacementNamed(context, '/doctor_login');
+                                                        } else {
+                                                          setState(() {
+                                                            errorText = "Invalid security code";
+                                                          });
+                                                        }
+                                                      },
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: const Color(0XFF4B352A),
+                                                        foregroundColor: Colors.white,
+                                                        textStyle: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontFamily: 'Crimson',
+                                                        ),
+                                                      ),
+                                                      child: Text("Submit"),
                                                     ),
-                                                  ),
-                                                  child: Text("Cancel"),
-                                                ),
-                                                ElevatedButton(
-                                                  onPressed: () {
-                                                    if (_codeController.text == "1234") {
-                                                      Navigator.of(context).pop();
-                                                      Navigator.pushReplacementNamed(context, '/admin_home');
-                                                    } else {
-                                                      setState(() {
-                                                        errorText = "Invalid security code";
-                                                      });
-                                                    }
-                                                  },
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: const Color(0XFF4B352A),
-                                                    foregroundColor: Colors.white,
-                                                    textStyle: TextStyle(
-                                                      fontSize: 20,
-                                                      fontWeight: FontWeight.bold,
-                                                      fontFamily: 'Crimson',
-                                                    ),
-                                                  ),
-                                                  child: Text("Submit"),
-                                                ),
-                                              ],
+                                                  ],
+                                                );
+                                              },
                                             );
                                           },
                                         );
                                       },
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0XFF4B352A),
-                                    foregroundColor: Colors.white,
-                                    textStyle: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Crimson',
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0XFF4B352A),
+                                        foregroundColor: Colors.white,
+                                        textStyle: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Crimson',
+                                        ),
+                                      ),
+                                      child: Text("Continue"),
                                     ),
-                                  ),
-                                  child: Text("Continue"),
-                                ),
-                              ],
+                                  ],
+                                );
+                              },
                             );
                           },
+                          child: Image.asset(
+                            'asset/image/doctor.png',
+                            width: 75,
+                            height: 75,
+                            fit: BoxFit.cover,
+                          ),
                         );
                       },
-                      child: Image.asset(
-                        'asset/image/pharmacy.png',
-                        width: 70,
-                        height: 70,
-                        fit: BoxFit.cover,
-                      ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0).copyWith(left: 20.0),
+                    child: Builder(
+                      builder: (context) {
+                        return GestureDetector(
+                          onTap: () {
+                            print("Tap detected");
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text(
+                                    "Are you a staff at Care Plus?",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Crimson',
+                                      color: const Color(0XFF4B352A),
+                                    ),
+                                  ),
+                                  actionsAlignment: MainAxisAlignment.center,
+                                  actions: [
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0XFFB5B5B5),
+                                        foregroundColor: Colors.white,
+                                        textStyle: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Crimson',
+                                        ),
+                                      ),
+                                      child: Text('Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            TextEditingController _codeController = TextEditingController();
+                                            String? errorText;
+
+                                            return StatefulBuilder(
+                                              builder: (context, setState) {
+                                                // Add listener to clear error when typing
+                                                _codeController.addListener(() {
+                                                  if (errorText != null) {
+                                                    setState(() {
+                                                      errorText = null;
+                                                    });
+                                                  }
+                                                });
+
+                                                return AlertDialog(
+                                                  title: Text(
+                                                    "Enter Security Code",
+                                                    style: TextStyle(
+                                                      fontFamily: 'Crimson',
+                                                      fontWeight: FontWeight.bold,
+                                                      color: const Color(0XFF4B352A),
+                                                      fontSize: 25,
+                                                    ),
+                                                  ),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      TextField(
+                                                        controller: _codeController,
+                                                        decoration: InputDecoration(
+                                                          hintText: "Enter code",
+                                                        ),
+                                                        obscureText: true,
+                                                        keyboardType: TextInputType.number,
+                                                      ),
+                                                      if (errorText != null)
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(top: 8.0),
+                                                          child: Text(
+                                                            errorText!,
+                                                            style: TextStyle(
+                                                              color: Colors.red,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    ElevatedButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: const Color(0XFFB5B5B5),
+                                                        foregroundColor: Colors.white,
+                                                        textStyle: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontFamily: 'Crimson',
+                                                        ),
+                                                      ),
+                                                      child: Text("Cancel"),
+                                                    ),
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        if (_codeController.text == "1234") {
+                                                          Navigator.of(context).pop();
+                                                          Navigator.pushReplacementNamed(context, '/admin_home');
+                                                        } else {
+                                                          setState(() {
+                                                            errorText = "Invalid security code";
+                                                          });
+                                                        }
+                                                      },
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: const Color(0XFF4B352A),
+                                                        foregroundColor: Colors.white,
+                                                        textStyle: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontFamily: 'Crimson',
+                                                        ),
+                                                      ),
+                                                      child: Text("Submit"),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0XFF4B352A),
+                                        foregroundColor: Colors.white,
+                                        textStyle: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Crimson',
+                                        ),
+                                      ),
+                                      child: Text("Continue"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: Image.asset(
+                            'asset/image/pharmacy.png',
+                            width: 70,
+                            height: 70,
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
