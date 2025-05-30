@@ -12,15 +12,39 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final List<String> states = ['Kedah']; // Add more if needed
+  Map<String, List<Map<String, dynamic>>> pharmacyData = {};
 
+  @override
   void initState() {
     super.initState();
+    fetchPharmacyData();
   }
 
   Future<void> _signOutUser() async {
     await FirebaseAuth.instance.signOut();
     // Optional: Navigate to login page
     Navigator.pushReplacementNamed(context, '/');
+  }
+
+  Future<void> fetchPharmacyData() async {
+    Map<String, List<Map<String, dynamic>>> tempData = {};
+
+    for (String state in states) {
+      final querySnapshot = await _firestore
+          .collection('pharmacy')
+          .doc('state')
+          .collection(state)
+          .get();
+
+      print('Fetched ${querySnapshot.docs.length} documents for $state');
+
+      tempData[state] = querySnapshot.docs.map((doc) => doc.data()).toList();
+    }
+
+    setState(() {
+      pharmacyData = tempData;
+    });
   }
 
   @override
@@ -102,6 +126,9 @@ class _HomeState extends State<Home> {
                 fontSize: 30,
               ),
             ),
+
+            SizedBox(height: 10.0),
+
             Row(
               children: [
                 Padding(
@@ -135,23 +162,71 @@ class _HomeState extends State<Home> {
                 ),
               ],
             ),
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              margin: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0XFFF0ECE7),
-                borderRadius: BorderRadius.circular(12.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: Offset(0, 3),
-                  ),
-                ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: pharmacyData.entries.map((entry) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 250, // Height for horizontal scroll area
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          reverse: true, // Scroll from right to left
+                          child: Row(
+                            children: entry.value.map((data) {
+                              return Container(
+                                padding: const EdgeInsets.all(16.0),
+                                margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                                width: 230,
+                                decoration: BoxDecoration(
+                                  color: const Color(0XFFF0ECE7),
+                                  borderRadius: BorderRadius.circular(12.0),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.3),
+                                      spreadRadius: 2,
+                                      blurRadius: 5,
+                                      offset: Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    if (data['image'] != null)
+                                      Image.network(
+                                        data['image'],
+                                        height: 100,
+                                        width: 100,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        data['name'] ?? 'Unnamed Pharmacy',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(data['address'] ?? 'No address available',
+                                    textAlign: TextAlign.center,),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
               ),
             ),
           ],
