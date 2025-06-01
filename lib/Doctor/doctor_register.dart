@@ -90,8 +90,6 @@ class _RegisterDoctor extends State<DoctorRegister> {
     }
   }
 
-
-
   Future<void> _registerUser() async {
     bool isValidEmail = emailRegex.hasMatch(email.text);
     bool isValidPassword = passwordRegex.hasMatch(password.text);
@@ -157,7 +155,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
       User? user = userCredential.user;
 
       if (user != null) {
-        await _firestore.collection('doctors').doc(user.uid).set({
+        await _firestore.collection('doctors').doc(customID).set({
           'doctor_id': customID,
           'name': name.text.trim(),
           'email': email.text.trim(),
@@ -167,7 +165,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
           'language': language.text.trim(),
           'MMC': MMC.text.trim(),
           'NSR': NSR.text.trim(),
-          'Specialty': selectedSpecialization ?? '',
+          'specialty': selectedSpecialization,
           'imageUrl': _imageUrl ?? '',
         });
 
@@ -552,7 +550,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                                   print("Tapped");
                                   Navigator.pushNamed(
                                     context,
-                                    '/terms_condition',
+                                    '/doctor_terms_condition',
                                   );
                                 },
                                 child: Text(
@@ -576,7 +574,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                                   print("Tapped");
                                   Navigator.pushNamed(
                                     context,
-                                    '/privacy_policy',
+                                    '/doctor_privacy',
                                   );
                                 },
                                 child: Text(
@@ -710,7 +708,7 @@ class ContactInputFormat extends TextInputFormatter {
       maxLength = 10;
       for (int i = 0; i < digitsOnly.length && i < maxLength; i++) {
         formatted += digitsOnly[i];
-        if (i == 2 || i == 5) {
+        if (i == 1 || i == 4) {
           if (i != maxLength - 1) formatted += '-';
         }
       }

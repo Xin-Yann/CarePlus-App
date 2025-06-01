@@ -4,10 +4,10 @@ class TermsCondition extends StatefulWidget {
   const TermsCondition({Key? key}) : super(key: key);
 
   @override
-  State<TermsCondition> createState() => _LoginState();
+  State<TermsCondition> createState() => _TermsConditionState();
 }
 
-class _LoginState extends State<TermsCondition> {
+class _TermsConditionState extends State<TermsCondition> {
   final TextEditingController num1 = TextEditingController();
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +40,7 @@ class _LoginState extends State<TermsCondition> {
           Padding(
             padding: const EdgeInsets.all(8.0).copyWith(top:20.0, left: 40.0, right: 40.0),
             child: Text(
-              '1. HealthConnect enables users to schedule appointments with pharmacy through the app.',
+              '1. CarePlus enables users to schedule appointments with pharmacy through the app.',
               style: TextStyle(fontSize: 16, color: Colors.black),
               softWrap: true,
             ),
@@ -57,7 +57,7 @@ class _LoginState extends State<TermsCondition> {
           Padding(
             padding: const EdgeInsets.all(8.0).copyWith(top:20.0,left: 40.0, right: 40.0),
             child: Text(
-              '3. HealthConnect is not responsible for delays caused by unforeseen circumstances or issues with third-party shipping providers.',
+              '3. CarePlus is not responsible for delays caused by unforeseen circumstances or issues with third-party shipping providers.',
               style: TextStyle(fontSize: 16, color: Colors.black),
               softWrap: true,
             ),
@@ -75,7 +75,7 @@ class _LoginState extends State<TermsCondition> {
           Padding(
             padding: const EdgeInsets.all(8.0).copyWith(top:20.0,left: 40.0, right: 40.0),
             child: Text(
-              '5. HealthConnect will work with users to address and resolve such issues within the bounds of its policies.',
+              '5. CarePlus will work with users to address and resolve such issues within the bounds of its policies.',
               style: TextStyle(fontSize: 16, color: Colors.black),
               softWrap: true,
             ),
