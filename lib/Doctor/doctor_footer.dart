@@ -39,7 +39,7 @@ class DoctorFooter extends StatelessWidget {
                 _DoctorFooterItem(
                   imagePath: 'asset/image/user.png',
                   label: 'Account',
-                  route: '/profile',
+                  route: '/doctor_profile',
                   width: 26,
                   height: 26,
                 ),
