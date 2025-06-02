@@ -162,17 +162,58 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 Padding(
+                  padding: const EdgeInsets.all(8.0).copyWith(top: 32.0, left: 120.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/pharmacy_list');
+                    },
+                    child: Text(
+                      'view more',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: const Color(0XFF797979),
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Crimson',
+                        fontSize: 20,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              children: [
+                Padding(
                   padding: const EdgeInsets.all(
                     8.0,
-                  ).copyWith(top: 32.0, left: 120.0),
+                  ).copyWith(top: 25.0, left: 20.0),
                   child: Text(
-                    'view more',
+                    'Doctor List',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: const Color(0XFF797979),
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Crimson',
-                      fontSize: 20,
+                      fontSize: 30,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0).copyWith(top: 32.0, left: 120.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/specialist_doctor_list');
+                    },
+                    child: Text(
+                      'view more',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: const Color(0XFF797979),
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Crimson',
+                        fontSize: 20,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
                 ),

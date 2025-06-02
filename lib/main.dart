@@ -1,4 +1,4 @@
-import 'package:careplusapp/chat_with_us.dart';
+//import 'package:careplusapp/chat_with_us.dart';
 import 'package:careplusapp/forgot_password.dart';
 import 'package:careplusapp/privacy_policy.dart';
 import 'package:careplusapp/profile.dart';
@@ -9,16 +9,20 @@ import 'login.dart';
 import 'register.dart';
 import 'home.dart';
 import 'cart.dart';
-import 'chat_user.dart';
+//import 'chat_user.dart';
 import 'package:careplusapp/Doctor/doctor_login.dart';
 import 'package:careplusapp/Doctor/doctor_register.dart';
 import 'package:careplusapp/Doctor/doctor_home.dart';
+//import 'package:careplusapp/Doctor/chat_patient.dart';
+//import 'package:careplusapp/Doctor/chat_with_patient.dart';
+import 'pharmacy_list.dart';
+import 'specialist_doctor_list.dart';
+import 'specialist_doctor_details.dart';
 import 'package:careplusapp/Doctor/doctor_profile.dart';
 import 'package:careplusapp/Doctor/doctor_privacy_policy.dart';
 import 'package:careplusapp/Doctor/doctor_terms_condition.dart';
 import 'package:careplusapp/Doctor/chat_patient.dart';
 import 'package:careplusapp/Doctor/chat_with_patient.dart';
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +60,8 @@ class _MyAppState extends State<MyApp> {
         '/forgot_password': (context) => ForgotPassword(),
         '/profile':(context) => Profile(),
         '/cart':(context) => Cart(),
+        '/pharmacy_list':(context) => PharmacyList(),
+        '/specialist_doctor_list':(context) => SpecialistDoctorList(),
         '/doctor_login':(context) => DoctorLogin(),
         '/doctor_register':(context) => DoctorRegister(),
         '/doctor_home':(context) => DoctorHome(),
