@@ -26,10 +26,13 @@ class _DoctorProfileState extends State<DoctorProfile> {
   File? _profileImage;
   String? _imageUrl;
   String? selectedSpecialization;
+  String loggedInEmail = '';
 
   @override
   void initState() {
     super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    loggedInEmail = user?.email ?? '';
     fetchDoctorData();
   }
 
@@ -37,21 +40,34 @@ class _DoctorProfileState extends State<DoctorProfile> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      final docSnapshot = await _firestore.collection('doctors').doc(user.uid).get();
+      final loggedInEmail = user.email?.trim();
 
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data()!;
-        setState(() {
-          name.text = data['name'] ?? '';
-          email.text = data['email'] ?? '';
-          contact.text = data['contact'] ?? '';
-          professional.text = data['professional'] ?? '';
-          language.text = data['language'] ?? '';
-          MMC.text = data['MMC'] ?? '';
-          NSR.text = data['NSR'] ?? '';
-          specializationController.text = data?['Specialization'] ?? '';
-          _imageUrl = data['imageUrl'] ?? '';
-        });
+      // Query the 'doctors' collection where 'email' matches
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('doctors')
+          .where('email', isEqualTo: loggedInEmail)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final doc = querySnapshot.docs.first;
+        final data = doc.data();
+
+        if (mounted) {
+          setState(() {
+            name.text = data['name'] ?? '';
+            email.text = data['email'] ?? '';
+            contact.text = data['contact'] ?? '';
+            professional.text = data['professional'] ?? '';
+            language.text = data['language'] ?? '';
+            MMC.text = data['MMC'] ?? '';
+            NSR.text = data['NSR'] ?? '';
+            specializationController.text = data['specialty'] ?? '';
+            _imageUrl = data['imageUrl'] ?? '';
+          });
+        }
+      } else {
+        print("No doctor found with email: $loggedInEmail");
       }
     }
   }
@@ -159,23 +175,42 @@ class _DoctorProfileState extends State<DoctorProfile> {
                       ),
                     ),
 
-                    _profileImage != null
-                        ? CircleAvatar(
-                      backgroundImage: FileImage(_profileImage!),
-                      radius: 50,
-                    )
-                        : (_imageUrl != null && _imageUrl!.isNotEmpty)
-                        ? CircleAvatar(
-                      backgroundImage: NetworkImage(_imageUrl!),
-                      radius: 50,
-                    )
-                        : CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey[300],
-                      child: Icon(Icons.person, size: 50),
+                  _profileImage != null
+                      ? ClipOval(
+                    child: Image.file(
+                      _profileImage!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
                     ),
+                  )
+                      : (_imageUrl != null && _imageUrl!.isNotEmpty)
+                      ? ClipOval(
+                    child: Image.network(
+                      _imageUrl!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const CircularProgressIndicator();
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.broken_image, size: 50);
+                      },
+                    ),
+                  )
+                      : CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey[300],
+                    child: const Icon(Icons.person, size: 50),
+                  ),
 
-                    //Name
+                  SizedBox(height: 30.0,),
+
+                  //Name
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
@@ -200,7 +235,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                             color: isEditing ? Colors.black : Colors.grey[600],
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Specialization',
+                            hintText: 'Specialty',
                             hintStyle: TextStyle(
                               color: Colors.grey[500],
                               fontStyle: FontStyle.italic,

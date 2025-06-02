@@ -323,15 +323,16 @@ class _HomeState extends State<Home> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            CircleAvatar(
-                              radius: 40,
-                              backgroundImage:
-                                  doctor['imageUrl'] != null
-                                      ? NetworkImage(doctor['imageUrl'])
-                                      : const AssetImage(
-                                            'assets/default_avatar.png',
-                                          )
-                                          as ImageProvider,
+                            ClipOval(
+                              child: Image(
+                                image: doctor['imageUrl'] != null
+                                    ? NetworkImage(doctor['imageUrl'])
+                                    : const AssetImage('assets/default_avatar.png') as ImageProvider,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                alignment: Alignment.topCenter, // useful to center faces
+                              ),
                             ),
 
                             SizedBox(width: 12),

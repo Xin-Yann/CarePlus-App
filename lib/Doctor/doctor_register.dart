@@ -38,7 +38,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
     'Select One Specializations',
     'Cardiology',
     'Dermatology',
-    'Ear, Nose, and Throat (ENT) Surgery',
+    'Ear, Nose, and Throat (ENT)',
     'Endocrinology',
     'Gastroenterology & Hepatology',
     'General Medicine',
@@ -51,7 +51,6 @@ class _RegisterDoctor extends State<DoctorRegister> {
   String? _imageUrl;
 
   final ImagePicker _picker = ImagePicker();
-
 
   String hashValue(String input) {
     return sha256.convert(utf8.encode(input.trim())).toString();
@@ -70,13 +69,8 @@ class _RegisterDoctor extends State<DoctorRegister> {
 
     final response = await http.post(
       Uri.parse('https://api.imgur.com/3/image'),
-      headers: {
-        'Authorization': 'Client-ID f10c4d5c7204b1b',
-      },
-      body: {
-        'image': base64Image,
-        'type': 'base64',
-      },
+      headers: {'Authorization': 'Client-ID f10c4d5c7204b1b'},
+      body: {'image': base64Image, 'type': 'base64'},
     );
 
     if (response.statusCode == 200) {
@@ -98,13 +92,12 @@ class _RegisterDoctor extends State<DoctorRegister> {
     if (name.text.isEmpty ||
         contact.text.isEmpty ||
         email.text.isEmpty ||
-        password.text.isEmpty||
-        professional.text.isEmpty||
-        language.text.isEmpty||
-        MMC.text.isEmpty||
-        NSR.text.isEmpty||
-        specializations.isEmpty
-    ) {
+        password.text.isEmpty ||
+        professional.text.isEmpty ||
+        language.text.isEmpty ||
+        MMC.text.isEmpty ||
+        NSR.text.isEmpty ||
+        specializations.isEmpty) {
       setState(() {
         errorText = "Please fill in all fields.";
       });
@@ -142,7 +135,10 @@ class _RegisterDoctor extends State<DoctorRegister> {
 
     try {
       final doctorsRef = _firestore.collection('doctors');
-      final snapshot = await doctorsRef.where('doctor_id', isGreaterThanOrEqualTo: 'D').get();
+      final snapshot =
+          await doctorsRef
+              .where('doctor_id', isGreaterThanOrEqualTo: 'D')
+              .get();
       final count = snapshot.size;
       final customID = 'D${count + 1}';
 
@@ -249,31 +245,51 @@ class _RegisterDoctor extends State<DoctorRegister> {
               ],
             ),
 
-            SizedBox(height: 25.0,),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Column(
-                children: [
-                  _profileImage != null
-                      ? CircleAvatar(
-                    backgroundImage: FileImage(_profileImage!),
-                    radius: 50,
-                  )
-                      : CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey[300],
-                    child: Icon(Icons.person, size: 50),
-                  ),
-                  TextButton(
-                    onPressed: _pickAndUploadImage,
-                    child: Text('Pick Profile Image'),
-                  ),
-                ],
+            SizedBox(height: 25.0),
+            _profileImage != null
+                ? ClipOval(
+              child: Image.file(
+                _profileImage!,
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,// <-- center the image
               ),
+            )
+                : CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.grey[300],
+              child: Icon(Icons.person, size: 50),
             ),
 
+            TextButton(
+              onPressed: _pickAndUploadImage,
+              child: Text('Pick Profile Image'),
+            ),
 
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(vertical: 10),
+            //   child: Column(
+            //     children: [
+            //       _profileImage != null
+            //           ? CircleAvatar(
+            //         backgroundImage: FileImage(_profileImage!),width: 100,
+            //         height: 100,,
+            //         radius: 50,
+            //       )
+            //           :CircleAvatar(
+            //         radius: 50,
+            //         backgroundColor: Colors.grey[300],
+            //         child: Icon(Icons.person, size: 50), // or maybe 60-70 for a snug fit
+            //       ),
+            //
+            //       TextButton(
+            //         onPressed: _pickAndUploadImage,
+            //         child: Text('Pick Profile Image'),
+            //       ),
+            //     ],
+            //   ),
+            // ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: SizedBox(
@@ -297,27 +313,33 @@ class _RegisterDoctor extends State<DoctorRegister> {
                           color: Colors.white,
                         ), // Border when focused
                       ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 15,
+                      ),
                       filled: true,
-                      fillColor: Colors.transparent, // Avoid overriding container color
+                      fillColor:
+                          Colors
+                              .transparent, // Avoid overriding container color
                     ),
                     onChanged: (String? newValue) {
                       setState(() {
                         selectedSpecialization = newValue!;
                       });
                     },
-                    items: specializations.map((String specialization) {
-                      return DropdownMenuItem<String>(
-                        value: specialization,
-                        child: Text(specialization),
-                      );
-                    }).toList(),
+                    items:
+                        specializations.map((String specialization) {
+                          return DropdownMenuItem<String>(
+                            value: specialization,
+                            child: Text(specialization),
+                          );
+                        }).toList(),
                   ),
                 ),
               ),
             ),
 
-            SizedBox(height: 14.0,),
+            SizedBox(height: 14.0),
 
             //Name
             CustomTextField(
@@ -326,7 +348,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
               onChanged: () {},
             ),
 
-            SizedBox(height: 14.0,),
+            SizedBox(height: 14.0),
 
             //Email
             CustomTextField(
@@ -335,7 +357,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
               onChanged: () {},
             ),
 
-            SizedBox(height: 14.0,),
+            SizedBox(height: 14.0),
 
             //Password
             Padding(
@@ -386,7 +408,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
               ),
             ),
 
-            SizedBox(height: 14.0,),
+            SizedBox(height: 14.0),
 
             //Contact
             Padding(
@@ -428,7 +450,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
               ),
             ),
 
-            SizedBox(height: 14.0,),
+            SizedBox(height: 14.0),
 
             CustomTextField(
               hintText: 'Professional Education/Qualification',
@@ -436,7 +458,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
               onChanged: () {},
             ),
 
-            SizedBox(height: 14.0,),
+            SizedBox(height: 14.0),
 
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -473,7 +495,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
               ),
             ),
 
-            SizedBox(height: 14.0,),
+            SizedBox(height: 14.0),
 
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -510,7 +532,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
               ),
             ),
 
-            SizedBox(height: 14.0,),
+            SizedBox(height: 14.0),
 
             CustomTextField(
               hintText: 'Language',
@@ -518,7 +540,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
               onChanged: () {},
             ),
 
-            SizedBox(height: 20.0,),
+            SizedBox(height: 20.0),
 
             Row(
               children: [
@@ -610,7 +632,9 @@ class _RegisterDoctor extends State<DoctorRegister> {
               ),
 
             Padding(
-              padding: const EdgeInsets.all(8.0).copyWith(top: 25.0, bottom: 30.0),
+              padding: const EdgeInsets.all(
+                8.0,
+              ).copyWith(top: 25.0, bottom: 30.0),
               child: ElevatedButton(
                 onPressed: () {
                   _registerUser();
