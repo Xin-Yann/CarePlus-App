@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "104113039915",
+    "project_id": "careplusapp-2bd07",
+    "storage_bucket": "careplusapp-2bd07.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:104113039915:android:b4126445f563a92b1c186e",
+        "android_client_info": {
+          "package_name": "com.example.careplusapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsFvE4JJP7mARCB1gdM3mn0gioshJK0Mg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
