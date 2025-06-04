@@ -5,6 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
 class DoctorRegister extends StatefulWidget {
   const DoctorRegister({Key? key}) : super(key: key);
@@ -18,20 +21,67 @@ class _RegisterDoctor extends State<DoctorRegister> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final TextEditingController name = TextEditingController();
-  final TextEditingController birthDate = TextEditingController();
-  final TextEditingController ic = TextEditingController();
   final TextEditingController contact = TextEditingController();
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
-  final TextEditingController address = TextEditingController();
+  final TextEditingController professional = TextEditingController();
+  final TextEditingController language = TextEditingController();
+  final TextEditingController MMC = TextEditingController();
+  final TextEditingController NSR = TextEditingController();
   final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
   final passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{6,}$');
   bool _agreeToTerms = false;
   bool _obscurePassword = true;
   String? errorText;
+  String selectedSpecialization = 'Select One Specializations';
+  final List<String> specializations = [
+    'Select One Specializations',
+    'Cardiology',
+    'Dermatology',
+    'Ear, Nose, and Throat (ENT)',
+    'Endocrinology',
+    'Gastroenterology & Hepatology',
+    'General Medicine',
+    'Internal Medicine',
+    'Nephrology',
+    'Obstetrics & Gynaecology',
+    'Orthopaedic',
+  ];
+  File? _profileImage;
+  String? _imageUrl;
+
+  final ImagePicker _picker = ImagePicker();
 
   String hashValue(String input) {
     return sha256.convert(utf8.encode(input.trim())).toString();
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage == null) return;
+
+    setState(() {
+      _profileImage = File(pickedImage.path);
+    });
+
+    final bytes = await _profileImage!.readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final response = await http.post(
+      Uri.parse('https://api.imgur.com/3/image'),
+      headers: {'Authorization': 'Client-ID f10c4d5c7204b1b'},
+      body: {'image': base64Image, 'type': 'base64'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        _imageUrl = data['data']['link'];
+      });
+      print('Uploaded: $_imageUrl');
+    } else {
+      print('Upload failed: ${response.body}');
+    }
   }
 
   Future<void> _registerUser() async {
@@ -42,7 +92,12 @@ class _RegisterDoctor extends State<DoctorRegister> {
     if (name.text.isEmpty ||
         contact.text.isEmpty ||
         email.text.isEmpty ||
-        password.text.isEmpty) {
+        password.text.isEmpty ||
+        professional.text.isEmpty ||
+        language.text.isEmpty ||
+        MMC.text.isEmpty ||
+        NSR.text.isEmpty ||
+        specializations.isEmpty) {
       setState(() {
         errorText = "Please fill in all fields.";
       });
@@ -79,6 +134,14 @@ class _RegisterDoctor extends State<DoctorRegister> {
     }
 
     try {
+      final doctorsRef = _firestore.collection('doctors');
+      final snapshot =
+          await doctorsRef
+              .where('doctor_id', isGreaterThanOrEqualTo: 'D')
+              .get();
+      final count = snapshot.size;
+      final customID = 'D${count + 1}';
+
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(
             email: email.text.trim(),
@@ -88,11 +151,18 @@ class _RegisterDoctor extends State<DoctorRegister> {
       User? user = userCredential.user;
 
       if (user != null) {
-        await _firestore.collection('doctors').doc(user.uid).set({
+        await _firestore.collection('doctors').doc(customID).set({
+          'doctor_id': customID,
           'name': name.text.trim(),
           'email': email.text.trim(),
           'password': hashValue(password.text),
           'contact': contact.text.trim(),
+          'professional': professional.text.trim(),
+          'language': language.text.trim(),
+          'MMC': MMC.text.trim(),
+          'NSR': NSR.text.trim(),
+          'specialty': selectedSpecialization,
+          'imageUrl': _imageUrl ?? '',
         });
 
         ScaffoldMessenger.of(
@@ -138,20 +208,20 @@ class _RegisterDoctor extends State<DoctorRegister> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8.0).copyWith(top: 20.0),
+              padding: const EdgeInsets.all(8.0).copyWith(top: 60.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   IconButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/');
+                      Navigator.pushNamed(context, '/doctor_login');
                     },
                     icon: Icon(Icons.arrow_back_ios_new_rounded),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 50.0),
+
             Column(
               children: [
                 Text(
@@ -175,7 +245,101 @@ class _RegisterDoctor extends State<DoctorRegister> {
               ],
             ),
 
-            SizedBox(height: 25.0,),
+            SizedBox(height: 25.0),
+            _profileImage != null
+                ? ClipOval(
+              child: Image.file(
+                _profileImage!,
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,// <-- center the image
+              ),
+            )
+                : CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.grey[300],
+              child: Icon(Icons.person, size: 50),
+            ),
+
+            TextButton(
+              onPressed: _pickAndUploadImage,
+              child: Text('Pick Profile Image'),
+            ),
+
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(vertical: 10),
+            //   child: Column(
+            //     children: [
+            //       _profileImage != null
+            //           ? CircleAvatar(
+            //         backgroundImage: FileImage(_profileImage!),width: 100,
+            //         height: 100,,
+            //         radius: 50,
+            //       )
+            //           :CircleAvatar(
+            //         radius: 50,
+            //         backgroundColor: Colors.grey[300],
+            //         child: Icon(Icons.person, size: 50), // or maybe 60-70 for a snug fit
+            //       ),
+            //
+            //       TextButton(
+            //         onPressed: _pickAndUploadImage,
+            //         child: Text('Pick Profile Image'),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: SizedBox(
+                width: 380,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: DropdownButtonFormField<String>(
+                    value: selectedSpecialization,
+                    decoration: InputDecoration(
+                      labelText: 'Specialty',
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide(
+                          color: Colors.white,
+                        ), // Border when focused
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 15,
+                      ),
+                      filled: true,
+                      fillColor:
+                          Colors
+                              .transparent, // Avoid overriding container color
+                    ),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedSpecialization = newValue!;
+                      });
+                    },
+                    items:
+                        specializations.map((String specialization) {
+                          return DropdownMenuItem<String>(
+                            value: specialization,
+                            child: Text(specialization),
+                          );
+                        }).toList(),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 14.0),
 
             //Name
             CustomTextField(
@@ -184,12 +348,16 @@ class _RegisterDoctor extends State<DoctorRegister> {
               onChanged: () {},
             ),
 
+            SizedBox(height: 14.0),
+
             //Email
             CustomTextField(
               hintText: 'Email',
               valueController: email,
               onChanged: () {},
             ),
+
+            SizedBox(height: 14.0),
 
             //Password
             Padding(
@@ -240,6 +408,8 @@ class _RegisterDoctor extends State<DoctorRegister> {
               ),
             ),
 
+            SizedBox(height: 14.0),
+
             //Contact
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -280,7 +450,97 @@ class _RegisterDoctor extends State<DoctorRegister> {
               ),
             ),
 
-            SizedBox(height: 20.0,),
+            SizedBox(height: 14.0),
+
+            CustomTextField(
+              hintText: 'Professional Education/Qualification',
+              valueController: professional,
+              onChanged: () {},
+            ),
+
+            SizedBox(height: 14.0),
+
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                width: 382,
+                height: 60,
+                child: TextField(
+                  controller: MMC,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Malaysian Medical Council (MMC) Number',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[500],
+                      fontStyle: FontStyle.italic,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(
+                        color: Colors.white,
+                      ), // Border when focused
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 14.0),
+
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                width: 382,
+                height: 60,
+                child: TextField(
+                  controller: NSR,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'National Specialist Register (NSR) Number',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[500],
+                      fontStyle: FontStyle.italic,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(
+                        color: Colors.white,
+                      ), // Border when focused
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 14.0),
+
+            CustomTextField(
+              hintText: 'Language',
+              valueController: language,
+              onChanged: () {},
+            ),
+
+            SizedBox(height: 20.0),
 
             Row(
               children: [
@@ -312,7 +572,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                                   print("Tapped");
                                   Navigator.pushNamed(
                                     context,
-                                    '/terms_condition',
+                                    '/doctor_terms_condition',
                                   );
                                 },
                                 child: Text(
@@ -336,7 +596,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                                   print("Tapped");
                                   Navigator.pushNamed(
                                     context,
-                                    '/privacy_policy',
+                                    '/doctor_privacy',
                                   );
                                 },
                                 child: Text(
@@ -372,7 +632,9 @@ class _RegisterDoctor extends State<DoctorRegister> {
               ),
 
             Padding(
-              padding: const EdgeInsets.all(8.0).copyWith(top: 25.0),
+              padding: const EdgeInsets.all(
+                8.0,
+              ).copyWith(top: 25.0, bottom: 30.0),
               child: ElevatedButton(
                 onPressed: () {
                   _registerUser();
@@ -412,29 +674,29 @@ class _RegisterDoctor extends State<DoctorRegister> {
             //     ),
             //   ),
 
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Builder(
-                builder:
-                    (context) => GestureDetector(
-                      onTap: () {
-                        print("Tapped");
-                        Navigator.pushNamed(context, '/doctor_login');
-                      },
-                      child: Text(
-                        'Doctor Login',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color(0xFF6B4518),
-                          decoration: TextDecoration.underline,
-                          fontFamily:
-                              'Crimson', // Make sure your font is declared correctly in pubspec.yaml
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-              ),
-            ),
+            // Padding(
+            //   padding: const EdgeInsets.all(8.0),
+            //   child: Builder(
+            //     builder:
+            //         (context) => GestureDetector(
+            //           onTap: () {
+            //             print("Tapped");
+            //             Navigator.pushNamed(context, '/doctor_login');
+            //           },
+            //           child: Text(
+            //             'Doctor Login',
+            //             textAlign: TextAlign.center,
+            //             style: TextStyle(
+            //               color: Color(0xFF6B4518),
+            //               decoration: TextDecoration.underline,
+            //               fontFamily:
+            //                   'Crimson', // Make sure your font is declared correctly in pubspec.yaml
+            //               fontSize: 20,
+            //             ),
+            //           ),
+            //         ),
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -470,7 +732,7 @@ class ContactInputFormat extends TextInputFormatter {
       maxLength = 10;
       for (int i = 0; i < digitsOnly.length && i < maxLength; i++) {
         formatted += digitsOnly[i];
-        if (i == 2 || i == 5) {
+        if (i == 1 || i == 4) {
           if (i != maxLength - 1) formatted += '-';
         }
       }

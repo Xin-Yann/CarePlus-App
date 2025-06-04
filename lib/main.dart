@@ -17,6 +17,12 @@ import 'package:careplusapp/Doctor/doctor_home.dart';
 //import 'package:careplusapp/Doctor/chat_with_patient.dart';
 import 'pharmacy_list.dart';
 import 'specialist_doctor_list.dart';
+import 'specialist_doctor_details.dart';
+import 'package:careplusapp/Doctor/doctor_profile.dart';
+import 'package:careplusapp/Doctor/doctor_privacy_policy.dart';
+import 'package:careplusapp/Doctor/doctor_terms_condition.dart';
+import 'package:careplusapp/Doctor/chat_patient.dart';
+import 'package:careplusapp/Doctor/chat_with_patient.dart';
 import 'product_category.dart';
 
 Future<void> main() async {
@@ -61,7 +67,9 @@ class _MyAppState extends State<MyApp> {
         '/doctor_login':(context) => DoctorLogin(),
         '/doctor_register':(context) => DoctorRegister(),
         '/doctor_home':(context) => DoctorHome(),
-
+        '/doctor_profile':(context) => DoctorProfile(),
+        '/doctor_privacy':(context) => DoctorPrivacyPolicy(),
+        '/doctor_terms_condition':(context) => DoctorTermsCondition(),
       },
       home: Scaffold(
         backgroundColor: const Color(0xFFE1D9D0),

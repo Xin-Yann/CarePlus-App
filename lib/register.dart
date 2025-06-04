@@ -74,16 +74,22 @@ class _RegisterState extends State<Register> {
     }
 
     try {
-      UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
-            email: email.text.trim(),
-            password: password.text.trim(),
-          );
+      final usersRef = _firestore.collection('users');
+      final snapshot = await usersRef.where('user_id', isGreaterThanOrEqualTo: 'U').get();
+      final count = snapshot.size;
+      final customID = 'U${count + 1}';
+
+      // Step 2: Register with Firebase Auth
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email.text.trim(),
+        password: password.text.trim(),
+      );
 
       User? user = userCredential.user;
 
       if (user != null) {
-        await _firestore.collection('users').doc(user.uid).set({
+        await usersRef.doc(customID).set({
+          'user_id': customID,
           'name': name.text.trim(),
           'birthDate': birthDate.text.trim(),
           'icNumber': ic.text.trim(),
@@ -93,14 +99,13 @@ class _RegisterState extends State<Register> {
           'address': address.text.trim(),
         });
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Registration successful!')));
-
-        Navigator.pushReplacementNamed(context, '/home'); // Go to home screen
+        Navigator.pushNamed(context, '/home');
+        print('User registered with ID: $customID');
       }
-    } on FirebaseAuthException catch (e) {
-      print('Error: ${e.message}');
+    } catch (e) {
+      setState(() {
+        errorText = "Registration failed: ${e.toString()}";
+      });
     }
 
     TextEditingValue formatEditUpdate(
@@ -133,7 +138,7 @@ class _RegisterState extends State<Register> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8.0).copyWith(top: 20.0),
+              padding: const EdgeInsets.all(8.0).copyWith(top: 60.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [

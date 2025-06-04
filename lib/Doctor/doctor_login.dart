@@ -92,7 +92,7 @@ class _LoginDoctor extends State<DoctorLogin> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8.0).copyWith(top: 20.0),
+              padding: const EdgeInsets.all(8.0).copyWith(top: 70.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
@@ -291,30 +291,6 @@ class _LoginDoctor extends State<DoctorLogin> {
                   ),
                 ),
               ],
-            ),
-
-            //Forgot Password
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Builder(
-                builder:
-                    (context) => GestureDetector(
-                      onTap: () {
-                        print("Tapped");
-                        Navigator.pushNamed(context, '/forgot_password');
-                      },
-                      child: Text(
-                        'Forgot Password',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color(0xFF6B4518),
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Crimson',
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-              ),
             ),
           ],
         ),
