@@ -25,7 +25,7 @@ class Footer extends StatelessWidget {
               _FooterItem(
                 imagePath: 'asset/image/drug.png',
                 label: 'Product',
-                route: '/',
+                route: '/product_category',
                 width: 30,
                 height: 30,
               ),

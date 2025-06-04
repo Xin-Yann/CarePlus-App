@@ -17,7 +17,7 @@ import 'package:careplusapp/Doctor/doctor_home.dart';
 //import 'package:careplusapp/Doctor/chat_with_patient.dart';
 import 'pharmacy_list.dart';
 import 'specialist_doctor_list.dart';
-import 'specialist_doctor_details.dart';
+import 'product_category.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +57,7 @@ class _MyAppState extends State<MyApp> {
         '/cart':(context) => Cart(),
         '/pharmacy_list':(context) => PharmacyList(),
         '/specialist_doctor_list':(context) => SpecialistDoctorList(),
+        '/product_category':(context) => ProductCategory(),
         '/doctor_login':(context) => DoctorLogin(),
         '/doctor_register':(context) => DoctorRegister(),
         '/doctor_home':(context) => DoctorHome(),
