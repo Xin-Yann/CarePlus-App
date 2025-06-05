@@ -31,15 +31,22 @@ class SpecialistDoctorDetails extends StatelessWidget {
               padding: const EdgeInsets.all(20.0),
               children: [
                 Center(
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.grey[200],
-                    backgroundImage: imageUrl.isNotEmpty
-                        ? NetworkImage(imageUrl)
-                        : const NetworkImage('https://via.placeholder.com/150'),
-                    onBackgroundImageError: (exception, stackTrace) {
-                      debugPrint('Error loading image: $exception');
-                    },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      imageUrl.isNotEmpty
+                          ? imageUrl
+                          : 'https://via.placeholder.com/960x1443',
+                      height: 180,
+                      width: 120,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 180,
+                        width: 120,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.broken_image, color: Colors.grey),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),

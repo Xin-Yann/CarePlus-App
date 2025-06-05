@@ -21,8 +21,9 @@ import 'specialist_doctor_details.dart';
 import 'package:careplusapp/Doctor/doctor_profile.dart';
 import 'package:careplusapp/Doctor/doctor_privacy_policy.dart';
 import 'package:careplusapp/Doctor/doctor_terms_condition.dart';
-// import 'package:careplusapp/Doctor/chat_patient.dart';
-// import 'package:careplusapp/Doctor/chat_with_patient.dart';
+import 'package:careplusapp/Doctor/chat_patient.dart';
+import 'package:careplusapp/Doctor/chat_with_patient.dart';
+import 'product_category.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_login.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_register.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_home.dart';
@@ -66,6 +67,7 @@ class _MyAppState extends State<MyApp> {
         '/cart':(context) => Cart(),
         '/pharmacy_list':(context) => PharmacyList(),
         '/specialist_doctor_list':(context) => SpecialistDoctorList(),
+        '/product_category':(context) => ProductCategory(),
         '/doctor_login':(context) => DoctorLogin(),
         '/doctor_register':(context) => DoctorRegister(),
         '/doctor_home':(context) => DoctorHome(),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'specialist_doctor_details.dart'; // Make sure this import is correct
+import 'specialist_doctor_details.dart'; // Ensure this file exists and is correctly implemented
 
 class SpecialistDoctorList extends StatefulWidget {
   const SpecialistDoctorList({super.key});
@@ -61,7 +61,6 @@ class _SpecialistDoctorListState extends State<SpecialistDoctorList> {
               ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: DropdownButtonFormField<String>(
@@ -88,9 +87,7 @@ class _SpecialistDoctorListState extends State<SpecialistDoctorList> {
               },
             ),
           ),
-
           const SizedBox(height: 20),
-
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: (_selectedSpecialty == 'All Specialties')
@@ -158,7 +155,7 @@ class _SpecialistDoctorListState extends State<SpecialistDoctorList> {
       margin: const EdgeInsets.only(bottom: 16),
       color: const Color(0xFFF7F3EF),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
+      child: InkWell(
         onTap: () {
           Navigator.push(
             context,
@@ -167,24 +164,55 @@ class _SpecialistDoctorListState extends State<SpecialistDoctorList> {
             ),
           );
         },
-        contentPadding: const EdgeInsets.all(12),
-        leading: CircleAvatar(
-          radius: 32,
-          backgroundImage: imageUrl.isNotEmpty
-              ? NetworkImage(imageUrl)
-              : const NetworkImage('https://via.placeholder.com/150'),
-          backgroundColor: Colors.grey[200],
-        ),
-        title: Text(
-          name,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        subtitle: Text(
-          specialty,
-          style: const TextStyle(
-            fontSize: 14,
-            fontStyle: FontStyle.italic,
-            color: Colors.grey,
+        child: Container(
+          height: 160, // taller card for bigger image
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  imageUrl.isNotEmpty
+                      ? imageUrl
+                      : 'https://via.placeholder.com/960x1443',
+                  height: 140,
+                  width: 93, // 960/1443 ≈ 0.665 aspect ratio
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 140,
+                    width: 93,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start, // align to top
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      specialty,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
