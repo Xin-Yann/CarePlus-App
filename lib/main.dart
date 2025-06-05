@@ -21,8 +21,12 @@ import 'specialist_doctor_details.dart';
 import 'package:careplusapp/Doctor/doctor_profile.dart';
 import 'package:careplusapp/Doctor/doctor_privacy_policy.dart';
 import 'package:careplusapp/Doctor/doctor_terms_condition.dart';
-import 'package:careplusapp/Doctor/chat_patient.dart';
-import 'package:careplusapp/Doctor/chat_with_patient.dart';
+// import 'package:careplusapp/Doctor/chat_patient.dart';
+// import 'package:careplusapp/Doctor/chat_with_patient.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_login.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_register.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_home.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_profile.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,6 +72,10 @@ class _MyAppState extends State<MyApp> {
         '/doctor_profile':(context) => DoctorProfile(),
         '/doctor_privacy':(context) => DoctorPrivacyPolicy(),
         '/doctor_terms_condition':(context) => DoctorTermsCondition(),
+        '/pharmacy_login':(context) => PharmacyLogin(),
+        '/pharmacy_register':(context) => PharmacyRegister(),
+        '/pharmacy_home':(context) => PharmacyHome(),
+        '/pharmacy_profile':(context) => PharmacyProfile(),
       },
       home: Scaffold(
         backgroundColor: const Color(0xFFE1D9D0),
@@ -463,7 +471,7 @@ class _MyAppState extends State<MyApp> {
                                                       onPressed: () {
                                                         if (_codeController.text == "1234") {
                                                           Navigator.of(context).pop();
-                                                          Navigator.pushReplacementNamed(context, '/admin_home');
+                                                          Navigator.pushReplacementNamed(context, '/pharmacy_login');
                                                         } else {
                                                           setState(() {
                                                             errorText = "Invalid security code";
