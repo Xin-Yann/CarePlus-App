@@ -2,26 +2,23 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'doctor_footer.dart';
+// import 'doctor_footer.dart';
 
-class DoctorProfile extends StatefulWidget {
-  const DoctorProfile({Key? key}) : super(key: key);
+class PharmacyProfile extends StatefulWidget {
+  const PharmacyProfile({Key? key}) : super(key: key);
 
   @override
-  State<DoctorProfile> createState() => _DoctorProfileState();
+  State<PharmacyProfile> createState() => _PharmacyProfileState();
 }
 
-class _DoctorProfileState extends State<DoctorProfile> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+class _PharmacyProfileState extends State<PharmacyProfile> {
   final TextEditingController name = TextEditingController();
-  final TextEditingController contact = TextEditingController();
   final TextEditingController email = TextEditingController();
+  final TextEditingController contact = TextEditingController();
+  final TextEditingController address = TextEditingController();
   final TextEditingController password = TextEditingController();
-  final TextEditingController professional = TextEditingController();
-  final TextEditingController language = TextEditingController();
-  final TextEditingController MMC = TextEditingController();
-  final TextEditingController NSR = TextEditingController();
-  final TextEditingController specializationController = TextEditingController();
+  // final TextEditingController map = TextEditingController();
+  final TextEditingController operationHours = TextEditingController();
   bool isEditing = false;
   File? _profileImage;
   String? _imageUrl;
@@ -33,74 +30,75 @@ class _DoctorProfileState extends State<DoctorProfile> {
     super.initState();
     final user = FirebaseAuth.instance.currentUser;
     loggedInEmail = user?.email ?? '';
-    fetchDoctorData();
+    fetchPharmacyData();
   }
 
-  Future<void> fetchDoctorData() async {
+  Map<String, dynamic>? pharmacyData;
+  String? pharmacyImageUrl;
+
+  Future<void> fetchPharmacyData() async {
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user != null) {
-      final loggedInEmail = user.email?.trim();
+    if (user == null || user.email == null) {
+      print('User is not logged in or missing email.');
+      return;
+    }
 
-      // Query the 'doctors' collection where 'email' matches
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('doctors')
-          .where('email', isEqualTo: loggedInEmail)
-          .limit(1)
-          .get();
+    final Useremail = user.email!;
 
-      if (querySnapshot.docs.isNotEmpty) {
-        final doc = querySnapshot.docs.first;
-        final data = doc.data();
+    Map<String, List<String>> stateDocIds = {
+      "Perlis": ["P1", "P2", "P3"],
+      "Kedah": ["P4", "P5", "P6"],
+      "Penang": ["P7", "P8", "P9"],
+      "Perak": ["P10", "P11", "P12"],
+      "Selangor": ["P13", "P14", "P15"],
+      "Negeri Sembilan": ["P16", "P17", "P18"],
+      "Melaka": ["P19", "P20", "P21"],
+      "Kelantan": ["P22", "P23", "P24"],
+      "Terengganu": ["P25", "P26", "P27"],
+      "Pahang": ["P28", "P29", "P30"],
+      "Johor": ["P31", "P32", "P33"],
+      "Sabah": ["P34", "P35", "P36"],
+      "Sarawak": ["P37", "P38", "P39"],
+    };
 
-        if (mounted) {
-          setState(() {
-            name.text = data['name'] ?? '';
-            email.text = data['email'] ?? '';
-            contact.text = data['contact'] ?? '';
-            professional.text = data['professional'] ?? '';
-            language.text = data['language'] ?? '';
-            MMC.text = data['MMC'] ?? '';
-            NSR.text = data['NSR'] ?? '';
-            specializationController.text = data['specialty'] ?? '';
-            _imageUrl = data['imageUrl'] ?? '';
-          });
+    for (final entry in stateDocIds.entries) {
+      final state = entry.key;
+      for (final id in entry.value) {
+        final doc = await FirebaseFirestore.instance
+            .collection('pharmacy')
+            .doc('state')
+            .collection(state)
+            .doc(id)
+            .get();
+
+        if (doc.exists) {
+          final data = doc.data() as Map<String, dynamic>?;
+
+          if (data != null && data.containsKey('email')) {
+            print('Checking ${state} / ${id} -> Email: ${data['email']}');
+            if (data['email'] == Useremail) {
+              setState(() {
+                pharmacyData = data;
+                pharmacyImageUrl = pharmacyData?['imageUrl'] ?? '';
+                _imageUrl = pharmacyImageUrl;
+                // Update controllers:
+                name.text = data['name'] ?? '';
+                email.text = data['email'] ?? '';
+                contact.text = data['contact'] ?? '';
+                operationHours.text = data['operation_hours'] ?? '';
+                // map.text = data['map'] ?? '';
+              });
+              print('Match found in ${state} / ${id}');
+              return;
+            }
+          }
         }
-      } else {
-        print("No doctor found with email: $loggedInEmail");
+
       }
     }
-  }
 
-
-  Future<void> deleteUserAccount() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user != null) {
-        final uid = user.uid;
-
-        // Delete user document from Firestore
-        await FirebaseFirestore.instance.collection('users').doc(uid).delete();
-
-        // Delete the user's auth account
-        await user.delete();
-
-        // Navigate back or show a success message
-        print("User account deleted successfully.");
-
-        Navigator.pushReplacementNamed(context, '/');
-      }
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'requires-recent-login') {
-        print("The user must reauthenticate before this operation can be executed.");
-        // Prompt user to log in again
-      } else {
-        print("Error deleting account: ${e.message}");
-      }
-    } catch (e) {
-      print("Unexpected error: $e");
-    }
+    print('Pharmacy record not found.');
   }
 
   Widget build(BuildContext context) {
@@ -117,7 +115,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                     padding: const EdgeInsets.all(8.0),
                     child: IconButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/home');
+                        Navigator.pushNamed(context, '/pharmacy_home');
                       },
                       icon: Icon(Icons.arrow_back_ios_new_rounded),
                     ),
@@ -158,31 +156,10 @@ class _DoctorProfileState extends State<DoctorProfile> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          deleteUserAccount();
-                          print("Button pressed");
-                        },
-                        child: Text(
-                          "DELETE ACCOUNT",
-                          style: TextStyle(
-                            color: const Color(0xFF6B4518),
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _profileImage != null
+                    Center(
+                      child: _profileImage != null
                           ? ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          8,
-                        ),
+                        borderRadius: BorderRadius.circular(8),
                         child: Image.file(
                           _profileImage!,
                           width: 100,
@@ -193,13 +170,11 @@ class _DoctorProfileState extends State<DoctorProfile> {
                       )
                           : (_imageUrl != null && _imageUrl!.isNotEmpty)
                           ? ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          8,
-                        ),
+                        borderRadius: BorderRadius.circular(8),
                         child: Image.network(
                           _imageUrl!,
-                          width: 120,
-                          height: 180,
+                          width: 100,
+                          height: 100,
                           fit: BoxFit.cover,
                           alignment: Alignment.topCenter,
                           loadingBuilder: (context, child, loadingProgress) {
@@ -216,63 +191,9 @@ class _DoctorProfileState extends State<DoctorProfile> {
                         backgroundColor: Colors.grey[300],
                         child: const Icon(Icons.person, size: 50),
                       ),
-                    ],
-                  ),
-
-                  SizedBox(height: 30.0,),
-
-                  //Name
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'Specialization',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF6B4518),
-                        ),
-                      ),
                     ),
 
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        width: 382,
-                        height: 60,
-                        child: TextField(
-                          enabled: isEditing,
-                          controller: specializationController,
-                          style: TextStyle(
-                            color: isEditing ? Colors.black : Colors.grey[600],
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Specialty',
-                            hintStyle: TextStyle(
-                              color: Colors.grey[500],
-                              fontStyle: FontStyle.italic,
-                            ),
-                            filled: true,
-                            fillColor: isEditing ? Colors.white : Color(0XFFCCCCCC),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.white),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.white),
-                            ),
-                            disabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Color(0XFFCCCCCC)),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    SizedBox(height: 30.0,),
 
                     //Name
                     Padding(
@@ -380,6 +301,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                       ),
                     ),
 
+
                     //Contact
                     SizedBox(height: 15.0),
                     Padding(
@@ -483,7 +405,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        'Professional Education/Qualification',
+                        'Operating Hours',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -499,12 +421,12 @@ class _DoctorProfileState extends State<DoctorProfile> {
                         height: 60,
                         child: TextField(
                           enabled: isEditing,
-                          controller: professional,
+                          controller: operationHours,
                           style: TextStyle(
                             color: isEditing ? Colors.black :  Colors.grey[600],
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Name',
+                            hintText: 'Operation Hours',
                             hintStyle: TextStyle(
                               color: Colors.grey[500] ,
                               fontStyle: FontStyle.italic,
@@ -532,59 +454,59 @@ class _DoctorProfileState extends State<DoctorProfile> {
                       ),
                     ),
 
-                    //Address
-                    SizedBox(height: 15.0),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'Malaysian Medical Council (MMC) Number',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF6B4518),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        width: 382,
-                        height: 60,
-                        child: TextField(
-                          enabled: isEditing,
-                          controller: MMC,
-                          keyboardType: TextInputType.number,
-                          style: TextStyle(
-                            color: isEditing ? Colors.black :  Colors.grey[600],
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Malaysian Medical Council (MMC) Number',
-                            hintStyle: TextStyle(
-                              color: Colors.grey[500],
-                              fontStyle: FontStyle.italic,
-                            ),
-                            filled: true,
-                            fillColor: isEditing ? Colors.white : Color(0XFFCCCCCC),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.white),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.white), // Border when focused
-                            ),
-                            disabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: const Color(0XFFCCCCCC)),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    // //Address
+                    // SizedBox(height: 15.0),
+                    // Padding(
+                    //   padding: const EdgeInsets.all(8.0),
+                    //   child: Text(
+                    //     'Google Map Link',
+                    //     style: TextStyle(
+                    //       fontSize: 16,
+                    //       fontWeight: FontWeight.bold,
+                    //       color: const Color(0xFF6B4518),
+                    //     ),
+                    //   ),
+                    // ),
+                    // Padding(
+                    //   padding: const EdgeInsets.all(8.0),
+                    //   child: Container(
+                    //     width: 382,
+                    //     height: 60,
+                    //     child: TextField(
+                    //       enabled: isEditing,
+                    //       controller: map,
+                    //       keyboardType: TextInputType.number,
+                    //       style: TextStyle(
+                    //         color: isEditing ? Colors.black :  Colors.grey[600],
+                    //       ),
+                    //       decoration: InputDecoration(
+                    //         hintText: 'Google Map Link',
+                    //         hintStyle: TextStyle(
+                    //           color: Colors.grey[500],
+                    //           fontStyle: FontStyle.italic,
+                    //         ),
+                    //         filled: true,
+                    //         fillColor: isEditing ? Colors.white : Color(0XFFCCCCCC),
+                    //         contentPadding: EdgeInsets.symmetric(
+                    //           horizontal: 16,
+                    //           vertical: 16,
+                    //         ),
+                    //         enabledBorder: OutlineInputBorder(
+                    //           borderRadius: BorderRadius.circular(30),
+                    //           borderSide: BorderSide(color: Colors.white),
+                    //         ),
+                    //         focusedBorder: OutlineInputBorder(
+                    //           borderRadius: BorderRadius.circular(30),
+                    //           borderSide: BorderSide(color: Colors.white), // Border when focused
+                    //         ),
+                    //         disabledBorder: OutlineInputBorder(
+                    //           borderRadius: BorderRadius.circular(30),
+                    //           borderSide: BorderSide(color: const Color(0XFFCCCCCC)),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
 
                     SizedBox(height: 25.0),
                     //Button
@@ -636,7 +558,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
           ),
         ),
       ),
-      bottomNavigationBar: const DoctorFooter(),
+      // bottomNavigationBar: const DoctorFooter(),
     );
   }
 }

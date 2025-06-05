@@ -1,52 +1,95 @@
 import 'package:flutter/material.dart';
-import 'CustomTextField.dart';
+import '../CustomTextField.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
 
-class Register extends StatefulWidget {
-  const Register({Key? key}) : super(key: key);
+class PharmacyRegister extends StatefulWidget {
+  const PharmacyRegister({Key? key}) : super(key: key);
 
   @override
-  State<Register> createState() => _RegisterState();
+  State<PharmacyRegister> createState() => _RegisterPharmacy();
 }
 
-class _RegisterState extends State<Register> {
+class _RegisterPharmacy extends State<PharmacyRegister> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final TextEditingController name = TextEditingController();
-  final TextEditingController birthDate = TextEditingController();
-  final TextEditingController ic = TextEditingController();
-  final TextEditingController contact = TextEditingController();
   final TextEditingController email = TextEditingController();
-  final TextEditingController password = TextEditingController();
+  final TextEditingController contact = TextEditingController();
   final TextEditingController address = TextEditingController();
+  final TextEditingController password = TextEditingController();
+  // final TextEditingController map = TextEditingController();
+  // final TextEditingController socialMedia = TextEditingController();
+  final TextEditingController operationHours = TextEditingController();
   final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
   final passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{6,}$');
   bool _agreeToTerms = false;
   bool _obscurePassword = true;
   String? errorText;
+  File? _profileImage;
+  String? _imageUrl;
+
+  final ImagePicker _picker = ImagePicker();
 
   String hashValue(String input) {
     return sha256.convert(utf8.encode(input.trim())).toString();
   }
 
-  Future<void> _registerUser() async {
+  Future<void> _pickAndUploadImage() async {
+    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage == null) return;
+
+    setState(() {
+      _profileImage = File(pickedImage.path);
+    });
+
+    final bytes = await _profileImage!.readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final response = await http.post(
+      Uri.parse('https://api.imgur.com/3/image'),
+      headers: {'Authorization': 'Client-ID f10c4d5c7204b1b'},
+      body: {'image': base64Image, 'type': 'base64'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        _imageUrl = data['data']['link'];
+      });
+      print('Uploaded: $_imageUrl');
+    } else {
+      print('Upload failed: ${response.body}');
+    }
+  }
+
+  Future<void> _registerPharmacy() async {
     bool isValidEmail = emailRegex.hasMatch(email.text);
     bool isValidPassword = passwordRegex.hasMatch(password.text);
+    bool isDoctorEmail = email.text.trim().endsWith('@pharmacy.com');
 
     if (name.text.isEmpty ||
-        birthDate.text.isEmpty ||
-        ic.text.isEmpty ||
         contact.text.isEmpty ||
         email.text.isEmpty ||
         password.text.isEmpty ||
-        address.text.isEmpty) {
+        address.text.isEmpty ||
+        operationHours.text.isEmpty) {
       setState(() {
         errorText = "Please fill in all fields.";
+      });
+      return;
+    }
+
+    if (!isDoctorEmail) {
+      setState(() {
+        errorText = "Only emails ending in @doctor.com are allowed.";
       });
       return;
     }
@@ -74,60 +117,117 @@ class _RegisterState extends State<Register> {
     }
 
     try {
-      final usersRef = _firestore.collection('users');
-      final snapshot = await usersRef.where('user_id', isGreaterThanOrEqualTo: 'U').get();
-      final count = snapshot.size;
-      final customID = 'U${count + 1}';
+      // Map of state to possible doc IDs
+      Map<String, List<String>> stateDocIds = {
+        "Perlis": ["P1", "P2", "P3"],
+        "Kedah": ["P4", "P5", "P6"],
+        "Penang": ["P7", "P8", "P9"],
+        "Perak": ["P10", "P11", "P12"],
+        "Selangor": ["P13", "P14", "P15"],
+        "Negeri Sembilan": ["P16", "P17", "P18"],
+        "Melaka": ["P19", "P20", "P21"],
+        "Kelantan": ["P22", "P23", "P24"],
+        "Terengganu": ["P25", "P26", "P27"],
+        "Pahang": ["P28", "P29", "P30"],
+        "Johor": ["P31", "P32", "P33"],
+        "Sabah": ["P34", "P35", "P36"],
+        "Sarawak": ["P37", "P38", "P39"],
+      };
 
-      // Step 2: Register with Firebase Auth
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email.text.trim(),
-        password: password.text.trim(),
-      );
+      // Extract the last word of the address
+      String addressText = address.text.trim();
+      List<String> words =
+          addressText
+              .replaceAll(RegExp(r'[^\w\s]'), '') // Remove commas/punctuation
+              .split(' ')
+              .where((w) => w.isNotEmpty)
+              .toList();
+      String lastWord = words.isNotEmpty ? words.last : '';
+
+      // Match last word to known states
+      String? matchedState;
+      for (String state in stateDocIds.keys) {
+        if (lastWord.toLowerCase() == state.toLowerCase()) {
+          matchedState = state;
+          break;
+        }
+      }
+
+      if (matchedState == null) {
+        setState(() {
+          errorText =
+              "Could not detect a valid Malaysian state from the end of the address.";
+        });
+        return;
+      }
+
+      if (matchedState == null) {
+        setState(() {
+          errorText =
+              "Could not detect a valid Malaysian state from the address.";
+        });
+        return;
+      }
+
+      // Find an available docId
+      String selectedDocId = '';
+      for (String id in stateDocIds[matchedState]!) {
+        DocumentSnapshot doc =
+            await _firestore
+                .collection('pharmacy')
+                .doc('state')
+                .collection(matchedState)
+                .doc(id)
+                .get();
+        if (!doc.exists) {
+          selectedDocId = id;
+          break;
+        }
+      }
+
+      if (selectedDocId.isEmpty) {
+        setState(() {
+          errorText = "All pharmacy IDs are used in $matchedState.";
+        });
+        return;
+      }
+
+      // Create user
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: email.text.trim(),
+            password: password.text.trim(),
+          );
 
       User? user = userCredential.user;
 
       if (user != null) {
-        await usersRef.doc(user.uid).set({
-          'user_id': customID,
-          'name': name.text.trim(),
-          'birthDate': birthDate.text.trim(),
-          'icNumber': ic.text.trim(),
-          'contact': contact.text.trim(),
-          'email': email.text.trim(),
-          'password': hashValue(password.text),
-          'address': address.text.trim(),
-        });
+        await _firestore
+            .collection('pharmacy')
+            .doc('state')
+            .collection(matchedState)
+            .doc(selectedDocId)
+            .set({
+              'pharmacy_id': selectedDocId,
+              'name': name.text.trim(),
+              'email': email.text.trim(),
+              'password': hashValue(password.text),
+              'contact': contact.text.trim(),
+              // 'map': map.text.trim(),
+              // 'social_media': socialMedia.text.trim(),
+              'address': address.text.trim(),
+              'operation_hours': operationHours.text.trim(),
+              'imageUrl': _imageUrl ?? '',
+            });
 
-        Navigator.pushNamed(context, '/home');
-        print('User registered with ID: $customID');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Pharmacy registration successful!')),
+        );
+
+        Navigator.pushReplacementNamed(context, '/pharmacy_home');
       }
-    } catch (e) {
-      setState(() {
-        errorText = "Registration failed: ${e.toString()}";
-      });
-    }
-
-    TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue,
-      TextEditingValue newValue,
-    ) {
-      String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-      String formatted = '';
-
-      for (int i = 0; i < digitsOnly.length && i < 12; i++) {
-        formatted += digitsOnly[i];
-        if (i == 5 || i == 7) {
-          formatted += '-';
-        }
-      }
-
-      // Handle cursor position
-      int selectionIndex = formatted.length;
-      return TextEditingValue(
-        text: formatted,
-        selection: TextSelection.collapsed(offset: selectionIndex),
-      );
+    } on FirebaseAuthException catch (e) {
+      print('Error: ${e.message}');
     }
   }
 
@@ -144,7 +244,7 @@ class _RegisterState extends State<Register> {
                 children: [
                   IconButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/');
+                      Navigator.pushNamed(context, '/pharmacy_login');
                     },
                     icon: Icon(Icons.arrow_back_ios_new_rounded),
                   ),
@@ -152,18 +252,52 @@ class _RegisterState extends State<Register> {
               ),
             ),
 
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'REGISTER',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFF6B4518),
-                  fontFamily: 'Crimson',
-                  fontSize: 50,
+            Column(
+              children: [
+                Text(
+                  'PHARMACY',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontFamily: 'Crimson',
+                    fontSize: 50,
+                  ),
                 ),
-              ),
+                Text(
+                  'REGISTER',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontFamily: 'Crimson',
+                    fontSize: 50,
+                  ),
+                ),
+              ],
             ),
+
+            SizedBox(height: 25.0),
+            _profileImage != null
+                ? ClipOval(
+                  child: Image.file(
+                    _profileImage!,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter, // <-- center the image
+                  ),
+                )
+                : CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, size: 50),
+                ),
+
+            TextButton(
+              onPressed: _pickAndUploadImage,
+              child: Text('Pick Profile Image'),
+            ),
+
+            SizedBox(height: 14.0),
 
             //Name
             CustomTextField(
@@ -172,140 +306,7 @@ class _RegisterState extends State<Register> {
               onChanged: () {},
             ),
 
-            //Birth Date
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                width: 382,
-                height: 60,
-                child: TextField(
-                  controller: birthDate,
-                  readOnly: true,
-                  onTap: () async {
-                    DateTime? date = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2090),
-                    );
-                    if (date != null) {
-                      birthDate.text = date.toString().substring(0, 10);
-                    }
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Birth Date',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[500],
-                      fontStyle: FontStyle.italic,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(color: Colors.white),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(
-                        color: Colors.white,
-                      ), // Border when focused
-                    ),
-                    suffixIcon: Icon(Icons.calendar_month, color: Colors.grey),
-                  ),
-                ),
-              ),
-            ),
-
-            //IC
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                width: 382,
-                height: 60,
-                child: TextField(
-                  controller: ic,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    ICInputFormat(),
-                    LengthLimitingTextInputFormatter(14),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: 'NRIC/MYKAD',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[500],
-                      fontStyle: FontStyle.italic,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(color: Colors.white),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(
-                        color: Colors.white,
-                      ), // Border when focused
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            //Contact
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                width: 382,
-                height: 60,
-                child: TextField(
-                  controller: contact,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    ContactInputFormat(),
-                    LengthLimitingTextInputFormatter(14),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: 'Contact No',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[500],
-                      fontStyle: FontStyle.italic,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(color: Colors.white),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide(
-                        color: Colors.white,
-                      ), // Border when focused
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            //Email
-            CustomTextField(
-              hintText: 'Email',
-              valueController: email,
-              onChanged: () {},
-            ),
+            SizedBox(height: 14.0),
 
             //Password
             Padding(
@@ -356,14 +357,146 @@ class _RegisterState extends State<Register> {
               ),
             ),
 
-            //Address
+            SizedBox(height: 14.0),
+
+            //Contact
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                width: 382,
+                height: 60,
+                child: TextField(
+                  controller: contact,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    ContactInputFormat(),
+                    LengthLimitingTextInputFormatter(14),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: 'Contact No',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[500],
+                      fontStyle: FontStyle.italic,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(
+                        color: Colors.white,
+                      ), // Border when focused
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 14.0),
+
+            CustomTextField(
+              hintText: 'Email',
+              valueController: email,
+              onChanged: () {},
+            ),
+
+            SizedBox(height: 14.0),
+
             CustomTextField(
               hintText: 'Address',
               valueController: address,
               onChanged: () {},
             ),
 
-            SizedBox(height: 25.0,),
+            SizedBox(height: 14.0),
+
+            CustomTextField(
+              hintText: 'Operation Hours',
+              valueController: operationHours,
+              onChanged: () {},
+            ),
+
+            SizedBox(height: 14.0),
+
+            // Padding(
+            //   padding: const EdgeInsets.all(8.0),
+            //   child: Container(
+            //     width: 382,
+            //     height: 60,
+            //     child: TextField(
+            //       controller: map,
+            //       decoration: InputDecoration(
+            //         hintText: 'Google Maps Link',
+            //         hintStyle: TextStyle(
+            //           color: Colors.grey[500],
+            //           fontStyle: FontStyle.italic,
+            //         ),
+            //         filled: true,
+            //         fillColor: Colors.white,
+            //         contentPadding: EdgeInsets.symmetric(
+            //           horizontal: 16,
+            //           vertical: 16,
+            //         ),
+            //         enabledBorder: OutlineInputBorder(
+            //           borderRadius: BorderRadius.circular(30),
+            //           borderSide: BorderSide(color: Colors.white),
+            //         ),
+            //         focusedBorder: OutlineInputBorder(
+            //           borderRadius: BorderRadius.circular(30),
+            //           borderSide: BorderSide(
+            //             color: Colors.white,
+            //           ), // Border when focused
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
+            //
+            // SizedBox(height: 14.0),
+            //
+            // Padding(
+            //   padding: const EdgeInsets.all(8.0),
+            //   child: Container(
+            //     width: 382,
+            //     height: 60,
+            //     child: TextField(
+            //       controller: socialMedia,
+            //       keyboardType: TextInputType.number,
+            //       decoration: InputDecoration(
+            //         hintText: 'Social Media Page Link',
+            //         hintStyle: TextStyle(
+            //           color: Colors.grey[500],
+            //           fontStyle: FontStyle.italic,
+            //         ),
+            //         filled: true,
+            //         fillColor: Colors.white,
+            //         contentPadding: EdgeInsets.symmetric(
+            //           horizontal: 16,
+            //           vertical: 16,
+            //         ),
+            //         enabledBorder: OutlineInputBorder(
+            //           borderRadius: BorderRadius.circular(30),
+            //           borderSide: BorderSide(color: Colors.white),
+            //         ),
+            //         focusedBorder: OutlineInputBorder(
+            //           borderRadius: BorderRadius.circular(30),
+            //           borderSide: BorderSide(
+            //             color: Colors.white,
+            //           ), // Border when focused
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
+
+            SizedBox(height: 20.0),
 
             Row(
               children: [
@@ -378,7 +511,6 @@ class _RegisterState extends State<Register> {
                     },
                   ),
                 ),
-
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start, // align left
                   children: [
@@ -396,7 +528,7 @@ class _RegisterState extends State<Register> {
                                   print("Tapped");
                                   Navigator.pushNamed(
                                     context,
-                                    '/terms_condition',
+                                    '/doctor_terms_condition',
                                   );
                                 },
                                 child: Text(
@@ -420,7 +552,7 @@ class _RegisterState extends State<Register> {
                                   print("Tapped");
                                   Navigator.pushNamed(
                                     context,
-                                    '/privacy_policy',
+                                    '/doctor_privacy',
                                   );
                                 },
                                 child: Text(
@@ -456,10 +588,12 @@ class _RegisterState extends State<Register> {
               ),
 
             Padding(
-              padding: const EdgeInsets.all(8.0).copyWith(top: 25.0),
+              padding: const EdgeInsets.all(
+                8.0,
+              ).copyWith(top: 25.0, bottom: 30.0),
               child: ElevatedButton(
                 onPressed: () {
-                  _registerUser();
+                  _registerPharmacy();
                   setState(() {});
                 },
                 style: ElevatedButton.styleFrom(
@@ -503,10 +637,10 @@ class _RegisterState extends State<Register> {
             //         (context) => GestureDetector(
             //           onTap: () {
             //             print("Tapped");
-            //             Navigator.pushNamed(context, '/login');
+            //             Navigator.pushNamed(context, '/doctor_login');
             //           },
             //           child: Text(
-            //             'Login',
+            //             'Doctor Login',
             //             textAlign: TextAlign.center,
             //             style: TextStyle(
             //               color: Color(0xFF6B4518),
@@ -522,51 +656,6 @@ class _RegisterState extends State<Register> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class ICInputFormat extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-    String formatted = '';
-
-    if (digitsOnly.length > 12) {
-      digitsOnly = digitsOnly.substring(0, 12);
-    }
-
-    for (int i = 0; i < digitsOnly.length && i < 12; i++) {
-      formatted += digitsOnly[i];
-      if (i == 5 || i == 7) {
-        formatted += '-';
-      }
-    }
-
-    // Count digits before the original cursor position
-    int digitsBeforeCursor = 0;
-    for (int i = 0; i < newValue.selection.end; i++) {
-      if (i < newValue.text.length &&
-          RegExp(r'\d').hasMatch(newValue.text[i])) {
-        digitsBeforeCursor++;
-      }
-    }
-    // Map digitsBeforeCursor to the formatted string index
-    int cursorPos = 0;
-    int digitsCounted = 0;
-    while (cursorPos < formatted.length && digitsCounted < digitsBeforeCursor) {
-      if (RegExp(r'\d').hasMatch(formatted[cursorPos])) {
-        digitsCounted++;
-      }
-      cursorPos++;
-    }
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: cursorPos),
     );
   }
 }
@@ -599,7 +688,7 @@ class ContactInputFormat extends TextInputFormatter {
       maxLength = 10;
       for (int i = 0; i < digitsOnly.length && i < maxLength; i++) {
         formatted += digitsOnly[i];
-        if (i == 2 || i == 5) {
+        if (i == 1 || i == 4) {
           if (i != maxLength - 1) formatted += '-';
         }
       }

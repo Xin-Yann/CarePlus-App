@@ -53,7 +53,7 @@ class _HomeState extends State<Home> {
 
   Future<void> fetchDoctorData() async {
     try {
-      final querySnapshot = await _firestore.collection('doctors').get();
+      final querySnapshot = await _firestore.collection('doctors').limit(3).get();
 
       setState(() {
         doctorData = querySnapshot.docs.map((doc) => doc.data()).toList();
@@ -182,43 +182,7 @@ class _HomeState extends State<Home> {
                 ),
               ],
             ),
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(
-                    8.0,
-                  ).copyWith(top: 25.0, left: 20.0),
-                  child: Text(
-                    'Doctor List',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Crimson',
-                      fontSize: 30,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0).copyWith(top: 32.0, left: 120.0),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/specialist_doctor_list');
-                    },
-                    child: Text(
-                      'view more',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: const Color(0XFF797979),
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Crimson',
-                        fontSize: 20,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
@@ -322,17 +286,21 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(
-                    8.0,
-                  ).copyWith(top: 32.0, left: 125.0),
-                  child: Text(
-                    'view more',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: const Color(0XFF797979),
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Crimson',
-                      fontSize: 20,
+                  padding: const EdgeInsets.all(8.0).copyWith(top: 32.0, left: 120.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/specialist_doctor_list');
+                    },
+                    child: Text(
+                      'view more',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: const Color(0XFF797979),
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Crimson',
+                        fontSize: 20,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
                 ),
@@ -348,7 +316,7 @@ class _HomeState extends State<Home> {
                     doctorData.map((doctor) {
                       return Container(
                         padding: const EdgeInsets.all(16.0),
-                        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                        margin: const EdgeInsets.symmetric(horizontal: 8.0).copyWith(top: 15.0),
                         decoration: BoxDecoration(
                           color: const Color(0XFFF0ECE7),
                           borderRadius: BorderRadius.circular(12.0),
@@ -364,7 +332,10 @@ class _HomeState extends State<Home> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            ClipOval(
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                8,
+                              ),
                               child: Image(
                                 image: doctor['imageUrl'] != null
                                     ? NetworkImage(doctor['imageUrl'])
@@ -402,6 +373,7 @@ class _HomeState extends State<Home> {
                     }).toList(),
               ),
             ),
+            SizedBox(height: 20.0,),
           ],
         ),
       ),
