@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'doctor_footer.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class DoctorProfile extends StatefulWidget {
   const DoctorProfile({Key? key}) : super(key: key);
@@ -21,12 +25,26 @@ class _DoctorProfileState extends State<DoctorProfile> {
   final TextEditingController language = TextEditingController();
   final TextEditingController MMC = TextEditingController();
   final TextEditingController NSR = TextEditingController();
-  final TextEditingController specializationController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
   bool isEditing = false;
   File? _profileImage;
   String? _imageUrl;
   String? selectedSpecialization;
   String loggedInEmail = '';
+  String? errorText;
+  final List<String> specializations = [
+    'Select One Specializations',
+    'Cardiology',
+    'Dermatology',
+    'Ear, Nose, and Throat (ENT)',
+    'Endocrinology',
+    'Gastroenterology & Hepatology',
+    'General Medicine',
+    'Internal Medicine',
+    'Nephrology',
+    'Obstetrics & Gynaecology',
+    'Orthopaedic',
+  ];
 
   @override
   void initState() {
@@ -34,6 +52,9 @@ class _DoctorProfileState extends State<DoctorProfile> {
     final user = FirebaseAuth.instance.currentUser;
     loggedInEmail = user?.email ?? '';
     fetchDoctorData();
+    print('Selected specialty: $selectedSpecialization');
+    print('Specializations list: $specializations');
+
   }
 
   Future<void> fetchDoctorData() async {
@@ -43,11 +64,12 @@ class _DoctorProfileState extends State<DoctorProfile> {
       final loggedInEmail = user.email?.trim();
 
       // Query the 'doctors' collection where 'email' matches
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('doctors')
-          .where('email', isEqualTo: loggedInEmail)
-          .limit(1)
-          .get();
+      final querySnapshot =
+          await FirebaseFirestore.instance
+              .collection('doctors')
+              .where('email', isEqualTo: loggedInEmail)
+              .limit(1)
+              .get();
 
       if (querySnapshot.docs.isNotEmpty) {
         final doc = querySnapshot.docs.first;
@@ -62,7 +84,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
             language.text = data['language'] ?? '';
             MMC.text = data['MMC'] ?? '';
             NSR.text = data['NSR'] ?? '';
-            specializationController.text = data['specialty'] ?? '';
+            selectedSpecialization = data['specialty'] ?? '';
             _imageUrl = data['imageUrl'] ?? '';
           });
         }
@@ -72,31 +94,127 @@ class _DoctorProfileState extends State<DoctorProfile> {
     }
   }
 
+  Future<void> saveDoctorData({String? imageUrl}) async {
+    final user = FirebaseAuth.instance.currentUser;
 
-  Future<void> deleteUserAccount() async {
+    if (user == null || user.email == null) {
+      print('User not logged in or email missing.');
+      return;
+    }
+
+    final firestore = FirebaseFirestore.instance;
+    final doctorsRef = firestore.collection('doctors');
+
+    try {
+      // Find the doctor's document by matching the email
+      final snapshot =
+          await doctorsRef.where('email', isEqualTo: user.email).limit(1).get();
+
+      if (snapshot.docs.isEmpty) {
+        print('Doctor document not found.');
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Doctor profile not found.')));
+        return;
+      }
+
+      final docId = snapshot.docs.first.id;
+
+      // Prepare updated data
+      Map<String, dynamic> updatedData = {
+        'name': name.text.trim(),
+        'email': email.text.trim(),
+        'contact': contact.text.trim(),
+        'professional': professional.text.trim(),
+        'language': language.text.trim(),
+        'MMC': MMC.text.trim(),
+        'NSR': NSR.text.trim(),
+        'specialty': selectedSpecialization,
+      };
+
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        updatedData['imageUrl'] = imageUrl;
+      }
+
+      // Update the Firestore document
+      await doctorsRef.doc(docId).update(updatedData);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Doctor profile updated successfully.')),
+      );
+
+      print('Doctor data updated for doc ID $docId');
+    } catch (e) {
+      print('Error while saving doctor data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update doctor profile.')),
+      );
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage == null) return;
+
+    setState(() {
+      _profileImage = File(pickedImage.path);
+    });
+
+    final bytes = await _profileImage!.readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final response = await http.post(
+      Uri.parse('https://api.imgur.com/3/image'),
+      headers: {'Authorization': 'Client-ID f10c4d5c7204b1b'},
+      body: {'image': base64Image, 'type': 'base64'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        _imageUrl = data['data']['link'];
+      });
+      print('Uploaded: $_imageUrl');
+    } else {
+      print('Upload failed: ${response.body}');
+    }
+  }
+
+  Future<void> deleteDoctorAccount() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
 
       if (user != null) {
-        final uid = user.uid;
+        final email = user.email;
 
-        // Delete user document from Firestore
-        await FirebaseFirestore.instance.collection('users').doc(uid).delete();
+        // Query doctor by email to find the correct doc ID (e.g., 'D1', 'D2', etc.)
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('doctors')
+            .where('email', isEqualTo: email)
+            .limit(1)
+            .get();
 
-        // Delete the user's auth account
-        await user.delete();
+        if (querySnapshot.docs.isNotEmpty) {
+          final docId = querySnapshot.docs.first.id;
 
-        // Navigate back or show a success message
-        print("User account deleted successfully.");
+          // Delete doctor document
+          await FirebaseFirestore.instance.collection('doctors').doc(docId).delete();
 
-        Navigator.pushReplacementNamed(context, '/');
+          // Delete the user's auth account
+          await user.delete();
+
+          print("Doctor account deleted successfully.");
+          Navigator.pushReplacementNamed(context, '/');
+        } else {
+          print("Doctor document not found.");
+        }
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
-        print("The user must reauthenticate before this operation can be executed.");
-        // Prompt user to log in again
+        print("The doctor must reauthenticate before this operation can be executed.");
+        // You can show a dialog to prompt re-authentication here
       } else {
-        print("Error deleting account: ${e.message}");
+        print("Error deleting doctor account: ${e.message}");
       }
     } catch (e) {
       print("Unexpected error: $e");
@@ -117,7 +235,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                     padding: const EdgeInsets.all(8.0),
                     child: IconButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/home');
+                        Navigator.pushNamed(context, '/doctor_home');
                       },
                       icon: Icon(Icons.arrow_back_ios_new_rounded),
                     ),
@@ -162,7 +280,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          deleteUserAccount();
+                          deleteDoctorAccount();
                           print("Button pressed");
                         },
                         child: Text(
@@ -175,57 +293,73 @@ class _DoctorProfileState extends State<DoctorProfile> {
                       ),
                     ),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _profileImage != null
-                          ? ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          8,
-                        ),
-                        child: Image.file(
-                          _profileImage!,
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.topCenter,
-                        ),
-                      )
-                          : (_imageUrl != null && _imageUrl!.isNotEmpty)
-                          ? ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          8,
-                        ),
-                        child: Image.network(
-                          _imageUrl!,
-                          width: 120,
-                          height: 180,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.topCenter,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return const CircularProgressIndicator();
+                    SizedBox(height: 30.0,),
+
+                    Center(
+                      child:
+                          _profileImage != null
+                              ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  _profileImage!,
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.topCenter,
+                                ),
+                              )
+                              : (_imageUrl != null && _imageUrl!.isNotEmpty)
+                              ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  _imageUrl!,
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.topCenter,
+                                  loadingBuilder: (
+                                    context,
+                                    child,
+                                    loadingProgress,
+                                  ) {
+                                    if (loadingProgress == null) return child;
+                                    return const CircularProgressIndicator();
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.broken_image,
+                                      size: 50,
+                                    );
+                                  },
+                                ),
+                              )
+                              : CircleAvatar(
+                                radius: 50,
+                                backgroundColor: Colors.grey[300],
+                                child: const Icon(Icons.person, size: 50),
+                              ),
+                    ),
+
+                    // Show "Change Profile Pic" button only when editing
+                    if (isEditing) ...[
+                      SizedBox(height: 20.0),
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: () {
+                            _pickAndUploadImage();
                           },
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.broken_image, size: 50);
-                          },
+                          icon: Icon(Icons.camera_alt),
+                          label: Text('Change Profile Pic'),
                         ),
-                      )
-                          : CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.grey[300],
-                        child: const Icon(Icons.person, size: 50),
                       ),
                     ],
-                  ),
 
-                  SizedBox(height: 30.0,),
+                    SizedBox(height: 20.0),
 
-                  //Name
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        'Specialization',
+                        'Specialty',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -234,41 +368,54 @@ class _DoctorProfileState extends State<DoctorProfile> {
                       ),
                     ),
 
+                    //Name
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      child: SizedBox(
                         width: 382,
-                        height: 60,
-                        child: TextField(
-                          enabled: isEditing,
-                          controller: specializationController,
-                          style: TextStyle(
-                            color: isEditing ? Colors.black : Colors.grey[600],
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color:isEditing ? Colors.white: const Color(0xFFCCCCCC),
+                            borderRadius: BorderRadius.circular(30),
                           ),
-                          decoration: InputDecoration(
-                            hintText: 'Specialty',
-                            hintStyle: TextStyle(
-                              color: Colors.grey[500],
-                              fontStyle: FontStyle.italic,
+                          child: DropdownButtonFormField<String>(
+                            isExpanded: true,  // Make dropdown take full width and align left
+                            value: selectedSpecialization?.isNotEmpty == true ? selectedSpecialization : null,
+                            decoration: InputDecoration(
+                              // enabledBorder: OutlineInputBorder(
+                              //   borderRadius: BorderRadius.circular(30),
+                              //   borderSide: BorderSide(color: Colors.white),
+                              // ),
+                              // focusedBorder: OutlineInputBorder(
+                              //   borderRadius: BorderRadius.circular(30),
+                              //   borderSide: BorderSide(color: Colors.white),
+                              // ),
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 15,
+                              ),
+                              filled: true,
+                              fillColor: Colors.transparent,
                             ),
-                            filled: true,
-                            fillColor: isEditing ? Colors.white : Color(0XFFCCCCCC),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.white),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.white),
-                            ),
-                            disabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Color(0XFFCCCCCC)),
-                            ),
+                            onChanged: isEditing
+                                ? (String? newValue) {
+                              setState(() {
+                                selectedSpecialization = newValue!;
+                              });
+                            }
+                                : null,
+                            items: specializations.map((String specialization) {
+                              return DropdownMenuItem<String>(
+                                value: specialization,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,  // Align text left
+                                  child: Text(specialization),
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ),
                       ),
@@ -296,16 +443,17 @@ class _DoctorProfileState extends State<DoctorProfile> {
                           enabled: isEditing,
                           controller: name,
                           style: TextStyle(
-                            color: isEditing ? Colors.black :  Colors.grey[600],
+                            color: isEditing ? Colors.black : Colors.grey[600],
                           ),
                           decoration: InputDecoration(
                             hintText: 'Name',
                             hintStyle: TextStyle(
-                              color: Colors.grey[500] ,
+                              color: Colors.grey[500],
                               fontStyle: FontStyle.italic,
                             ),
                             filled: true,
-                            fillColor: isEditing ? Colors.white : Color(0XFFCCCCCC),
+                            fillColor:
+                                isEditing ? Colors.white : Color(0XFFCCCCCC),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 16,
@@ -320,7 +468,9 @@ class _DoctorProfileState extends State<DoctorProfile> {
                             ),
                             disabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: const Color(0XFFCCCCCC)),
+                              borderSide: BorderSide(
+                                color: const Color(0XFFCCCCCC),
+                              ),
                             ),
                           ),
                         ),
@@ -349,7 +499,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                           enabled: isEditing,
                           controller: email,
                           style: TextStyle(
-                            color: isEditing ? Colors.black :  Colors.grey[600],
+                            color: isEditing ? Colors.black : Colors.grey[600],
                           ),
                           decoration: InputDecoration(
                             hintText: 'Email',
@@ -358,7 +508,8 @@ class _DoctorProfileState extends State<DoctorProfile> {
                               fontStyle: FontStyle.italic,
                             ),
                             filled: true,
-                            fillColor: isEditing ? Colors.white : Color(0XFFCCCCCC),
+                            fillColor:
+                                isEditing ? Colors.white : Color(0XFFCCCCCC),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 16,
@@ -373,7 +524,9 @@ class _DoctorProfileState extends State<DoctorProfile> {
                             ),
                             disabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: const Color(0XFFCCCCCC)),
+                              borderSide: BorderSide(
+                                color: const Color(0XFFCCCCCC),
+                              ),
                             ),
                           ),
                         ),
@@ -403,7 +556,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                           controller: contact,
                           keyboardType: TextInputType.number,
                           style: TextStyle(
-                            color: isEditing ? Colors.black :  Colors.grey[600],
+                            color: isEditing ? Colors.black : Colors.grey[600],
                           ),
                           decoration: InputDecoration(
                             hintText: 'Contact No',
@@ -412,7 +565,8 @@ class _DoctorProfileState extends State<DoctorProfile> {
                               fontStyle: FontStyle.italic,
                             ),
                             filled: true,
-                            fillColor: isEditing ? Colors.white : Color(0XFFCCCCCC),
+                            fillColor:
+                                isEditing ? Colors.white : Color(0XFFCCCCCC),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 16,
@@ -427,7 +581,9 @@ class _DoctorProfileState extends State<DoctorProfile> {
                             ),
                             disabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: const Color(0XFFCCCCCC)),
+                              borderSide: BorderSide(
+                                color: const Color(0XFFCCCCCC),
+                              ),
                             ),
                           ),
                         ),
@@ -501,16 +657,17 @@ class _DoctorProfileState extends State<DoctorProfile> {
                           enabled: isEditing,
                           controller: professional,
                           style: TextStyle(
-                            color: isEditing ? Colors.black :  Colors.grey[600],
+                            color: isEditing ? Colors.black : Colors.grey[600],
                           ),
                           decoration: InputDecoration(
                             hintText: 'Name',
                             hintStyle: TextStyle(
-                              color: Colors.grey[500] ,
+                              color: Colors.grey[500],
                               fontStyle: FontStyle.italic,
                             ),
                             filled: true,
-                            fillColor: isEditing ? Colors.white : Color(0XFFCCCCCC),
+                            fillColor:
+                                isEditing ? Colors.white : Color(0XFFCCCCCC),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 16,
@@ -525,7 +682,9 @@ class _DoctorProfileState extends State<DoctorProfile> {
                             ),
                             disabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: const Color(0XFFCCCCCC)),
+                              borderSide: BorderSide(
+                                color: const Color(0XFFCCCCCC),
+                              ),
                             ),
                           ),
                         ),
@@ -555,7 +714,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                           controller: MMC,
                           keyboardType: TextInputType.number,
                           style: TextStyle(
-                            color: isEditing ? Colors.black :  Colors.grey[600],
+                            color: isEditing ? Colors.black : Colors.grey[600],
                           ),
                           decoration: InputDecoration(
                             hintText: 'Malaysian Medical Council (MMC) Number',
@@ -564,7 +723,8 @@ class _DoctorProfileState extends State<DoctorProfile> {
                               fontStyle: FontStyle.italic,
                             ),
                             filled: true,
-                            fillColor: isEditing ? Colors.white : Color(0XFFCCCCCC),
+                            fillColor:
+                                isEditing ? Colors.white : Color(0XFFCCCCCC),
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 16,
@@ -575,11 +735,15 @@ class _DoctorProfileState extends State<DoctorProfile> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.white), // Border when focused
+                              borderSide: BorderSide(
+                                color: Colors.white,
+                              ), // Border when focused
                             ),
                             disabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: const Color(0XFFCCCCCC)),
+                              borderSide: BorderSide(
+                                color: const Color(0XFFCCCCCC),
+                              ),
                             ),
                           ),
                         ),
@@ -587,48 +751,45 @@ class _DoctorProfileState extends State<DoctorProfile> {
                     ),
 
                     SizedBox(height: 25.0),
-                    //Button
-                    // Center(
-                    //   child: Padding(
-                    //     padding: const EdgeInsets.all(8.0),
-                    //     child: ElevatedButton(
-                    //       onPressed: () async {
-                    //         if (isEditing) {
-                    //           // Save the changes
-                    //           final user = FirebaseAuth.instance.currentUser;
-                    //           if (user != null) {
-                    //             await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-                    //               'name': name.text.trim(),
-                    //               'birthDate': birthDate.text.trim(),
-                    //               'contact': contact.text.trim(),
-                    //               'email': email.text.trim(),
-                    //               'address': address.text.trim(),
-                    //               'icNumber': ic.text.trim(),
-                    //             });
-                    //             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    //               content: Text('Profile updated successfully.'),
-                    //             ));
-                    //           }
-                    //         }
-                    //
-                    //         setState(() {
-                    //           isEditing = !isEditing; // Toggle the editing state
-                    //         });
-                    //       },
-                    //       style: ElevatedButton.styleFrom(
-                    //         minimumSize: Size(200, 50),
-                    //         textStyle: TextStyle(
-                    //           fontSize: 20,
-                    //           fontWeight: FontWeight.bold,
-                    //           fontFamily: 'Crimson',
-                    //         ),
-                    //         backgroundColor: const Color(0xFF6B4518),
-                    //         foregroundColor: Colors.white,
-                    //       ),
-                    //       child: Text(isEditing ? 'Save' : 'Edit'),
-                    //     ),
-                    //   ),
-                    // )
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (isEditing) {
+                            await saveDoctorData(imageUrl: _imageUrl);
+                            setState(() {
+                              isEditing = false;
+                              _profileImage = null;
+                            });
+                          } else {
+                            setState(() {
+                              isEditing = true;
+                            });
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size(200, 50),
+                          textStyle: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Crimson',
+                          ),
+                          backgroundColor: const Color(0xFF6B4518),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text(isEditing ? 'Save' : 'Edit'),
+                      ),
+                    ),
+
+                    SizedBox(height: 20.0),
+
+                    if (errorText != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          errorText!,
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
                   ],
                 ),
               ),
