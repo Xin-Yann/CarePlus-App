@@ -217,49 +217,6 @@ class _LoginState extends State<Login> {
 
             SizedBox(height: 15.0),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    "Don't have account?",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Crimson',
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-
-                //Register
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Builder(
-                    builder:
-                        (context) => GestureDetector(
-                          onTap: () {
-                            print("Tapped");
-                            Navigator.pushNamed(context, '/register');
-                          },
-                          child: Text(
-                            'Register',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Color(0xFF6B4518),
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Crimson',
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                  ),
-                ),
-              ],
-            ),
-
             //Forgot Password
             Padding(
               padding: const EdgeInsets.all(8.0),

@@ -528,7 +528,7 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
                                   print("Tapped");
                                   Navigator.pushNamed(
                                     context,
-                                    '/doctor_terms_condition',
+                                    '/pharmacy_terms_condition',
                                   );
                                 },
                                 child: Text(
@@ -552,7 +552,7 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
                                   print("Tapped");
                                   Navigator.pushNamed(
                                     context,
-                                    '/doctor_privacy',
+                                    '/pharmacy_privacy',
                                   );
                                 },
                                 child: Text(

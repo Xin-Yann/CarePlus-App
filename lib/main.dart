@@ -28,6 +28,8 @@ import 'package:careplusapp/Pharmacy/pharmacy_login.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_register.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_home.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_profile.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_privacy_policy.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_terms_condition.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +80,8 @@ class _MyAppState extends State<MyApp> {
         '/pharmacy_register':(context) => PharmacyRegister(),
         '/pharmacy_home':(context) => PharmacyHome(),
         '/pharmacy_profile':(context) => PharmacyProfile(),
+        '/pharmacy_privacy':(context) => PharmacyPrivacyPolicy(),
+        '/pharmacy_terms_condition':(context) => PharmacyTermsCondition(),
       },
       home: Scaffold(
         backgroundColor: const Color(0xFFE1D9D0),
