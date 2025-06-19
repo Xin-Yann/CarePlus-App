@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'product_details.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Product extends StatelessWidget {
   final String symptom;
@@ -153,13 +154,83 @@ class Product extends StatelessWidget {
                                 bottom: 0,
                                 right: 0,
                                 child: ElevatedButton(
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              '$name added to cart')),
-                                    );
+                                  onPressed: () async {
+                                    final user = FirebaseAuth.instance.currentUser;
+                                    if (user == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('You must be logged in to add to cart')),
+                                      );
+                                      return;
+                                    }
+
+                                    final cartRef = FirebaseFirestore.instance.collection('cart');
+
+                                    try {
+                                      // Find cart doc for this user
+                                      final query = await cartRef.where('email', isEqualTo: user.email).limit(1).get();
+
+                                      if (query.docs.isEmpty) {
+                                        // No cart doc for user, create new doc with products array containing this product
+                                        await cartRef.add({
+                                          'email': user.email,
+                                          'products': [
+                                            {
+                                              'name': name,
+                                              'image': image,
+                                              'description': description,
+                                              'price': price,
+                                              'quantity': 1,
+                                            }
+                                          ],
+                                          'timestamp': Timestamp.now(),
+                                        });
+
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('$name added to cart')),
+                                        );
+                                      } else {
+                                        // Cart doc exists
+                                        final doc = query.docs.first;
+                                        final data = doc.data();
+
+                                        List products = List.from(data['products'] ?? []);
+
+                                        // Check if product exists in products array
+                                        final productIndex = products.indexWhere((p) => p['name'] == name);
+
+                                        if (productIndex != -1) {
+                                          // Product exists, update quantity
+                                          final currentQty = products[productIndex]['quantity'] ?? 0;
+                                          products[productIndex]['quantity'] = currentQty + 1;
+                                        } else {
+                                          // Product not exists, add new
+                                          products.add({
+                                            'name': name,
+                                            'image': image,
+                                            'description': description,
+                                            'price': price,
+                                            'quantity': 1,
+                                          });
+                                        }
+
+                                        // Update the cart doc
+                                        await doc.reference.update({
+                                          'products': products,
+                                          'timestamp': Timestamp.now(),
+                                        });
+
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('$name added/updated in cart')),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      print('Error adding/updating cart: $e');
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Failed to add item to cart')),
+                                      );
+                                    }
                                   },
+
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF6B4518),
                                     foregroundColor: Colors.white,
