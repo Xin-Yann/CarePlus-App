@@ -88,7 +88,7 @@ class _RegisterState extends State<Register> {
       User? user = userCredential.user;
 
       if (user != null) {
-        await usersRef.doc(user.uid).set({
+        await usersRef.doc(customID).set({
           'user_id': customID,
           'name': name.text.trim(),
           'birthDate': birthDate.text.trim(),

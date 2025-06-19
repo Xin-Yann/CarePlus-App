@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProductDetails extends StatefulWidget {
   final String name;
@@ -148,14 +150,61 @@ class _ProductDetailsState extends State<ProductDetails> {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.shopping_cart),
                 label: const Text('Add to Cart'),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          '${widget.name} (x$quantity) added to cart.'),
-                    ),
-                  );
+                onPressed: () async {
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('You must be logged in to add to cart')),
+                    );
+                    return;
+                  }
+
+                  try {
+                    // Query for existing cart item with same product name and same user email
+                    final query = await FirebaseFirestore.instance
+                        .collection('cart')
+                        .where('email', isEqualTo: user.email)
+                        .where('name', isEqualTo: widget.name)
+                        .limit(1)
+                        .get();
+
+                    if (query.docs.isNotEmpty) {
+                      // Existing item found - update quantity by adding new quantity
+                      final doc = query.docs.first;
+                      final currentQty = doc['quantity'] ?? 0;
+
+                      await doc.reference.update({
+                        'quantity': currentQty + quantity,
+                        'timestamp': Timestamp.now(),
+                      });
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${widget.name} is added into cart')),
+                      );
+                    } else {
+                      // No existing item - add new doc with quantity
+                      await FirebaseFirestore.instance.collection('cart').add({
+                        'name': widget.name,
+                        'image': widget.image,
+                        'description': widget.description,
+                        'price': widget.price,
+                        'email': user.email,
+                        'quantity': quantity,
+                        'timestamp': Timestamp.now(),
+                      });
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${widget.name} is added into cart')),
+                      );
+                    }
+                  } catch (e) {
+                    print('Error adding/updating cart: $e');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to add item to cart')),
+                    );
+                  }
                 },
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: brownColor,
                   foregroundColor: Colors.white,

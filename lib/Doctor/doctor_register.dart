@@ -247,7 +247,8 @@ class _RegisterDoctor extends State<DoctorRegister> {
 
             SizedBox(height: 25.0),
             _profileImage != null
-                ? ClipOval(
+                ? ClipRRect(
+              borderRadius: BorderRadius.circular(8),
               child: Image.file(
                 _profileImage!,
                 width: 100,

@@ -29,13 +29,22 @@ class _ProfileState extends State<Profile> {
 
 
   Future<void> fetchUserData() async {
+
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      final docSnapshot = await _firestore.collection('users').doc(user.uid).get();
+      final usersRef = FirebaseFirestore.instance.collection('users');
 
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data()!;
+      // Query Firestore to find the document with the user's email
+      final querySnapshot = await usersRef
+          .where('email', isEqualTo: user.email)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final doc = querySnapshot.docs.first;
+        final data = doc.data();
+
         setState(() {
           name.text = data['name'] ?? '';
           birthDate.text = data['birthDate'] ?? '';
@@ -45,7 +54,7 @@ class _ProfileState extends State<Profile> {
           ic.text = data['icNumber'] ?? '';
         });
       }
-    }
+      }
   }
 
   Future<void> deleteUserAccount() async {
@@ -53,23 +62,33 @@ class _ProfileState extends State<Profile> {
       final user = FirebaseAuth.instance.currentUser;
 
       if (user != null) {
-        final uid = user.uid;
+        final usersRef = FirebaseFirestore.instance.collection('users');
 
-        // Delete user document from Firestore
-        await FirebaseFirestore.instance.collection('users').doc(uid).delete();
+        // Find the custom document by matching user's email
+        final querySnapshot = await usersRef
+            .where('email', isEqualTo: user.email)
+            .limit(1)
+            .get();
 
-        // Delete the user's auth account
-        await user.delete();
+        if (querySnapshot.docs.isNotEmpty) {
+          final docID = querySnapshot.docs.first.id;
 
-        // Navigate back or show a success message
-        print("User account deleted successfully.");
+          // Delete Firestore document with custom ID
+          await usersRef.doc(docID).delete();
 
-        Navigator.pushReplacementNamed(context, '/');
+          // Delete Firebase Auth user
+          await user.delete();
+
+          print("User account deleted successfully.");
+          Navigator.pushReplacementNamed(context, '/');
+        } else {
+          print("User document with custom ID not found.");
+        }
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
         print("The user must reauthenticate before this operation can be executed.");
-        // Prompt user to log in again
+        // TODO: Prompt user to reauthenticate (e.g., with email/password)
       } else {
         print("Error deleting account: ${e.message}");
       }
@@ -547,17 +566,35 @@ class _ProfileState extends State<Profile> {
                               // Save the changes
                               final user = FirebaseAuth.instance.currentUser;
                               if (user != null) {
-                                await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-                                  'name': name.text.trim(),
-                                  'birthDate': birthDate.text.trim(),
-                                  'contact': contact.text.trim(),
-                                  'email': email.text.trim(),
-                                  'address': address.text.trim(),
-                                  'icNumber': ic.text.trim(),
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                  content: Text('Profile updated successfully.'),
-                                ));
+                                final usersRef = FirebaseFirestore.instance.collection('users');
+
+                                // Find document with matching email (or uid if stored)
+                                final querySnapshot = await usersRef
+                                    .where('email', isEqualTo: user.email)
+                                    .limit(1)
+                                    .get();
+
+                                if (querySnapshot.docs.isNotEmpty) {
+                                  final doc = querySnapshot.docs.first;
+                                  final docID = doc.id;
+
+                                  await usersRef.doc(docID).update({
+                                    'name': name.text.trim(),
+                                    'birthDate': birthDate.text.trim(),
+                                    'contact': contact.text.trim(),
+                                    'email': email.text.trim(),
+                                    'address': address.text.trim(),
+                                    'icNumber': ic.text.trim(),
+                                  });
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Profile updated successfully.')),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('User document not found.')),
+                                  );
+                                }
                               }
                             }
 
