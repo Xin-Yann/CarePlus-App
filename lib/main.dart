@@ -1,5 +1,6 @@
 //import 'package:careplusapp/chat_with_us.dart';
 import 'package:careplusapp/forgot_password.dart';
+import 'package:careplusapp/otp.dart';
 import 'package:careplusapp/privacy_policy.dart';
 import 'package:careplusapp/profile.dart';
 import 'package:careplusapp/terms_condition.dart';
@@ -57,6 +58,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       // initialRoute: '/',
       routes: {
         '/home': (context) => Home(),
