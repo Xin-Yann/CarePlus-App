@@ -227,6 +227,26 @@ class OrderCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
+                        'Name: ${data['name']}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Email: ${data['email']}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Contact: ${data['contact']}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Address: ${data['address']}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 15),
+                      Text(
                         'Placed At: ${_formatTimestamp(data['timestamp'])}',
                         style: const TextStyle(fontSize: 14),
                       ),
@@ -320,6 +340,19 @@ class OrderCard extends StatelessWidget {
                   ),
                 ),
                 actions: [
+                  if (data['orderStatus'] != 'Received')
+                    TextButton(
+                      onPressed: () async {
+                        await FirebaseFirestore.instance
+                            .collection('orders')
+                            .doc(data['orderId'])
+                            .update({'orderStatus': 'Received'});
+
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Received'),
+                    ),
+
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text('Close'),
