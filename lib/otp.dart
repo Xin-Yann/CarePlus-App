@@ -37,14 +37,12 @@ class _OTPPageState extends State<OTPPage> {
 
   @override
   Future<void> _verifyOTP() async {
-    if (_otpController.text.trim() == widget.otp) {
-      setState(
-        () => Text(
-          _message,
-          style: TextStyle(color: Color(0xFF6B4518), fontSize: 16),
-        ),
-      );
+    if (_otpController.text.trim() != widget.otp) {
+      setState(() => _message = 'Incorrect OTP. Try again.');
+      return;
+    }
 
+    try {
       final Map<String, DocumentSnapshot> productSnapshots = {};
 
       for (final item in widget.cartItems) {
@@ -56,15 +54,13 @@ class _OTPPageState extends State<OTPPage> {
 
         final doc = await productRef.get();
         if (!doc.exists) {
-          setState(() {
-            print('cartItems → ${widget.cartItems}');
-            print( 'Error: Product ${item['id']} in ${item['symptom']} does not exist.');
-          });
+          print('cartItems → ${widget.cartItems}');
+          print('Error: Product ${item['id']} in ${item['symptom']} does not exist.');
+          setState(() => _message = 'One or more items in your cart are no longer available.');
           return;
         }
 
         productSnapshots[item['id']] = doc;
-
       }
 
       final counterRef = FirebaseFirestore.instance.collection('metadata').doc('orderCounter');
@@ -75,11 +71,9 @@ class _OTPPageState extends State<OTPPage> {
         final newOrderNumber = lastOrderNumber + 1;
         final orderId = 'ORD-${newOrderNumber.toString().padLeft(3, '0')}';
 
-        if (snapshot.exists) {
-          transaction.update(counterRef, {'lastOrderNumber': newOrderNumber});
-        } else {
-          transaction.set(counterRef, {'lastOrderNumber': newOrderNumber});
-        }
+        snapshot.exists
+            ? transaction.update(counterRef, {'lastOrderNumber': newOrderNumber})
+            : transaction.set(counterRef, {'lastOrderNumber': newOrderNumber});
 
         final orderRef = FirebaseFirestore.instance.collection('orders').doc(orderId);
         transaction.set(orderRef, {
@@ -92,22 +86,15 @@ class _OTPPageState extends State<OTPPage> {
           'subtotal': widget.subtotal,
           'shippingFee': widget.shippingFee,
           'total': widget.total,
-          'paymentType': 'Credit Card',
-          'orderStatus': 'Debit/Credit Card',
+          'paymentType': 'Debit/Credit Card',
+          'orderStatus': 'Order Placed',
           'timestamp': Timestamp.now(),
         });
 
-        //Deduct stock after make payment
         for (final item in widget.cartItems) {
           final qty = item['quantity'] ?? 1;
           final String productId = item['id'];
           final String symptom = item['symptom'];
-
-          final productRef = FirebaseFirestore.instance
-              .collection('uncontrolled_medicine')
-              .doc('symptoms')
-              .collection(symptom)
-              .doc(productId);
 
           final snapshot = productSnapshots[productId]!;
           final currentStock = snapshot.get('stock');
@@ -116,18 +103,44 @@ class _OTPPageState extends State<OTPPage> {
             throw Exception('Invalid or insufficient stock for $productId');
           }
 
+          final productRef = FirebaseFirestore.instance
+              .collection('uncontrolled_medicine')
+              .doc('symptoms')
+              .collection(symptom)
+              .doc(productId);
+
           transaction.update(productRef, {
             'stock': FieldValue.increment(-qty),
           });
         }
       });
 
-      // Navigator.push(
-      //   context,
-      //   MaterialPageRoute(builder: (context) => OrderHistory()),
-      // );
-    } else {
-      setState(() => _message = 'Incorrect OTP. Try again.');
+      final cartQuery = await FirebaseFirestore.instance
+          .collection('cart')
+          .where('email', isEqualTo: widget.email)
+          .get();
+
+      for (final doc in cartQuery.docs) {
+        final data = doc.data();
+        final List<dynamic> allItems = data['items'] ?? [];
+
+        // Get the product IDs that were purchased
+        final productIds = widget.cartItems.map((item) => item['id']).toSet();
+
+        // Keep only the items that were NOT purchased
+        final remainingItems = allItems.where((item) => !productIds.contains(item['id'])).toList();
+
+        // Update the cart with the remaining items
+        await doc.reference.update({'items': remainingItems});
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => OrderHistory()),
+      );
+    } catch (e) {
+      print('Transaction failed: $e');
+      setState(() => _message = 'Something went wrong. Please try again.');
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'footer.dart';
+import 'order_history.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -78,6 +79,7 @@ class _HomeState extends State<Home> {
                   ).copyWith(top: 35.0, left: 20.0),
                   child: GestureDetector(
                     onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => OrderHistory()));
                       setState(() {});
                     },
                     child: Image.asset(

@@ -7,6 +7,7 @@ import 'package:careplusapp/terms_condition.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'login.dart';
+import 'order_history.dart';
 import 'register.dart';
 import 'home.dart';
 import 'cart.dart';
@@ -98,7 +99,6 @@ class _MyAppState extends State<MyApp> {
                 ).copyWith(top: 15.0, left: 20.0),
                 child: GestureDetector(
                   onTap: () {
-                    // Your tap action here
                     setState(() {});
                   },
                   child: Image.asset(

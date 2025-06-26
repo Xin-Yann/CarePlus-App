@@ -376,9 +376,29 @@ class _PaymentPageState extends State<PaymentPage>
                           'stock': FieldValue.increment(-qty),
                         });
                       }
+
+                      final cartQuery = await FirebaseFirestore.instance
+                          .collection('cart')
+                          .where('email', isEqualTo: widget.email)
+                          .get();
+
+                      for (final doc in cartQuery.docs) {
+                        final data = doc.data();
+                        final List<dynamic> allItems = data['items'] ?? [];
+
+                        // Get the product IDs that were purchased
+                        final productIds = widget.cartItems.map((item) => item['id']).toSet();
+
+                        // Keep only the items that were NOT purchased
+                        final remainingItems = allItems.where((item) => !productIds.contains(item['id'])).toList();
+
+                        // Update the cart with the remaining items
+                        await doc.reference.update({'items': remainingItems});
+                      }
+
                     });
 
-                    //Navigator.push(context, MaterialPageRoute(builder: (context) => OrderHistory()));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => OrderHistory()));
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -411,7 +431,7 @@ class _PaymentPageState extends State<PaymentPage>
             keyboardType: TextInputType.number,
             inputFormatters: [
               CardNumberInputFormat(),
-              LengthLimitingTextInputFormatter(20),
+              LengthLimitingTextInputFormatter(19),
             ],
             controller: cardNo,
             decoration: InputDecoration(
@@ -539,11 +559,11 @@ class CardNumberInputFormat extends TextInputFormatter {
     String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
     String formatted = '';
 
-    if (digitsOnly.length > 20) {
-      digitsOnly = digitsOnly.substring(0, 20);
+    if (digitsOnly.length > 19) {
+      digitsOnly = digitsOnly.substring(0, 19);
     }
 
-    for (int i = 0; i < digitsOnly.length && i < 20; i++) {
+    for (int i = 0; i < digitsOnly.length && i < 19; i++) {
       if (i > 0 && i % 4 == 0) {
         formatted += ' ';
       }
