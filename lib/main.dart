@@ -1,4 +1,3 @@
-//import 'package:careplusapp/chat_with_us.dart';
 import 'package:careplusapp/forgot_password.dart';
 import 'package:careplusapp/privacy_policy.dart';
 import 'package:careplusapp/profile.dart';
@@ -9,20 +8,17 @@ import 'login.dart';
 import 'register.dart';
 import 'home.dart';
 import 'cart.dart';
-//import 'chat_user.dart';
 import 'package:careplusapp/Doctor/doctor_login.dart';
 import 'package:careplusapp/Doctor/doctor_register.dart';
 import 'package:careplusapp/Doctor/doctor_home.dart';
-//import 'package:careplusapp/Doctor/chat_patient.dart';
-//import 'package:careplusapp/Doctor/chat_with_patient.dart';
+import 'package:careplusapp/Doctor/chat_with_patient.dart';
+import 'package:careplusapp/chat_with_doctor.dart';
 import 'pharmacy_list.dart';
 import 'specialist_doctor_list.dart';
 import 'specialist_doctor_details.dart';
 import 'package:careplusapp/Doctor/doctor_profile.dart';
 import 'package:careplusapp/Doctor/doctor_privacy_policy.dart';
 import 'package:careplusapp/Doctor/doctor_terms_condition.dart';
-import 'package:careplusapp/Doctor/chat_patient.dart';
-import 'package:careplusapp/Doctor/chat_with_patient.dart';
 import 'product_category.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_login.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_register.dart';
@@ -30,6 +26,13 @@ import 'package:careplusapp/Pharmacy/pharmacy_home.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_profile.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_privacy_policy.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_terms_condition.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_manage_product.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_add_product.dart';
+import 'package:careplusapp/Doctor/doctor_ePrescription_patient.dart';
+import 'package:careplusapp/Doctor/doctor_ePrescription_medList.dart';
+import 'package:careplusapp/Doctor/doctor_add_ePrescription.dart';
+import 'package:careplusapp/Doctor/doctor_ePrescription_details.dart';
+import 'package:careplusapp/e-Prescription.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,6 +85,63 @@ class _MyAppState extends State<MyApp> {
         '/pharmacy_profile':(context) => PharmacyProfile(),
         '/pharmacy_privacy':(context) => PharmacyPrivacyPolicy(),
         '/pharmacy_terms_condition':(context) => PharmacyTermsCondition(),
+        '/pharmacy_manage_product':(context) => PharmacyManageProduct(),
+        //'/pharmacy_add_product':(context) => PharmacyAddProduct(),
+        '/chat_with_doctor':(context) => ChatWithDoctor(),
+        '/chat_with_patient':(context) => ChatWithPatient(),
+        '/doctor_ePrescription_patient':(context) => DoctorePrescriptionPatient(),
+        '/doctor_ePrescription_medList': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+          if (args != null && args['session'] != null) {
+            return DoctorePrescriptionMedList(session: args['session']);
+          } else {
+            return const Scaffold(
+              body: Center(child: Text('❌ No session data found')),
+            );
+          }
+        },
+
+        '/doctor_add_ePrescription': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          if (args != null && args['session'] != null && args['drug'] != null) {
+            return DoctorAddePrescription(
+              session: args['session'],
+              drug: args['drug'],
+            );
+          } else {
+            return const Scaffold(
+              body: Center(child: Text('❌ Missing prescription arguments')),
+            );
+          }
+        },
+
+        '/doctor_ePrescription_details': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is Map<String, dynamic>) {
+            return DoctorePrescriptionDetails(session: args);
+          } else {
+            return const Scaffold(
+              body: Center(child: Text('❌ No session data found')),
+            );
+          }
+        },
+
+        '/e-Prescription': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is Map<String, dynamic>) {
+            return ePrescriptionPage(
+              userId: args['userId'],
+              sessionId: args['sessionId'],
+              sessionDate: args['sessionDate'],
+              sessionTime: args['sessionTime'],
+            );
+          } else {
+            return const Scaffold(
+              body: Center(child: Text('❌ No session data found')),
+            );
+          }
+        },
       },
       home: Scaffold(
         backgroundColor: const Color(0xFFE1D9D0),

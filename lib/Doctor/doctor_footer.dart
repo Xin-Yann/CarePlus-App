@@ -25,14 +25,14 @@ class DoctorFooter extends StatelessWidget {
                 _DoctorFooterItem(
                   imagePath: 'asset/image/prescription.png',
                   label: 'E-Prescription',
-                  route: '/',
+                  route: '/doctor_ePrescription_patient',
                   width: 30,
                   height: 30,
                 ),
                 _DoctorFooterItem(
                   imagePath: 'asset/image/messenger.png',
                   label: 'Chat',
-                  route: '/doctor_home',
+                  route: '/chat_with_patient',
                   width: 26,
                   height: 26,
                 ),

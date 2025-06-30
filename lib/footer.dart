@@ -32,7 +32,7 @@ class Footer extends StatelessWidget {
               _FooterItem(
                 imagePath: 'asset/image/messenger.png',
                 label: 'Message',
-                route: '/home',
+                route: '/chat_with_doctor',
                 width: 26,
                 height: 26,
               ),
