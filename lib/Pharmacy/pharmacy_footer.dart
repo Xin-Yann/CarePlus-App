@@ -1,3 +1,6 @@
+import 'package:careplusapp/Pharmacy/pharmacy_history.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_home.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_profile.dart';
 import 'package:flutter/material.dart';
 
 class PharmacyFooter extends StatelessWidget {
@@ -14,34 +17,52 @@ class PharmacyFooter extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: const [
+              children: [
                 _PharmacyFooterItem(
                   imagePath: 'asset/image/home.png',
                   label: 'Home',
-                  route: '/pharmacy_home',
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => PharmacyHome()),
+                    );
+                  },
+                  //route: '/pharmacy_home',
                   width: 30,
                   height: 30,
                 ),
-                _PharmacyFooterItem(
-                  imagePath: 'asset/image/prescription.png',
-                  label: 'E-Prescription',
-                  route: '/',
-                  width: 30,
-                  height: 30,
+               _PharmacyFooterItem(
+                  imagePath: 'asset/image/order.png',
+                  label: 'Orders',
+                  //route: '/',
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => PharmacyHistory()),
+                    );
+                  },
+                  width: 31,
+                  height: 31,
                 ),
-                _PharmacyFooterItem(
-                  imagePath: 'asset/image/messenger.png',
-                  label: 'Chat',
-                  route: '/',
-                  width: 26,
-                  height: 26,
-                ),
+                // _PharmacyFooterItem(
+                //   imagePath: 'asset/image/order_history.png',
+                //   label: 'Transaction',
+                //
+                //   width: 31,
+                //   height: 31,
+                // ),
                 _PharmacyFooterItem(
                   imagePath: 'asset/image/user.png',
                   label: 'Account',
-                  route: '/pharmacy_profile',
-                  width: 26,
-                  height: 26,
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => PharmacyProfile()),
+                    );
+                  },
+                  //route: '/pharmacy_profile',
+                  width: 30,
+                  height: 30,
                 ),
               ],
             )
@@ -54,25 +75,28 @@ class PharmacyFooter extends StatelessWidget {
 class _PharmacyFooterItem extends StatelessWidget {
   final String imagePath;
   final String label;
-  final String route;
+  //final String route;
   final double width;
   final double height;
+  final VoidCallback? onTap;
 
   const _PharmacyFooterItem({
     required this.imagePath,
     required this.label,
-    required this.route,
+    // required this.route,
     this.width = 24.0,
     this.height = 24.0,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          Navigator.pushReplacementNamed(context, route);
-        },
+        onTap: onTap,
+        // onTap: () {
+        //   Navigator.pushReplacementNamed(context, route);
+        // },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

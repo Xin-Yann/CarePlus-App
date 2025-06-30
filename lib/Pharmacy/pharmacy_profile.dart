@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:careplusapp/Pharmacy/pharmacy_footer.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -807,7 +808,7 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
           ),
         ),
       ),
-      // bottomNavigationBar: const DoctorFooter(),
+      bottomNavigationBar: const PharmacyFooter(),
     );
   }
 }

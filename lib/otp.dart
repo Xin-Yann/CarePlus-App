@@ -1,0 +1,226 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'order_history.dart';
+
+class OTPPage extends StatefulWidget {
+  final List<Map<String, dynamic>> cartItems;
+  final String name;
+  final String email;
+  final String contact;
+  final String address;
+  final String otp;
+  final double subtotal;
+  final double shippingFee;
+  final double total;
+
+  const OTPPage({
+    super.key,
+    required this.cartItems,
+    required this.name,
+    required this.email,
+    required this.contact,
+    required this.address,
+    required this.otp,
+    required this.subtotal,
+    required this.shippingFee,
+    required this.total,
+  });
+
+  @override
+  State<OTPPage> createState() => _OTPPageState();
+}
+
+class _OTPPageState extends State<OTPPage> {
+  final TextEditingController _otpController = TextEditingController();
+  String _message = '';
+
+  @override
+  Future<void> _verifyOTP() async {
+    if (_otpController.text.trim() != widget.otp) {
+      setState(() => _message = 'Incorrect OTP. Try again.');
+      return;
+    }
+
+    try {
+      final Map<String, DocumentSnapshot> productSnapshots = {};
+
+      for (final item in widget.cartItems) {
+        final productRef = FirebaseFirestore.instance
+            .collection('uncontrolled_medicine')
+            .doc('symptoms')
+            .collection(item['symptom'])
+            .doc(item['id']);
+
+        final doc = await productRef.get();
+        if (!doc.exists) {
+          print('cartItems → ${widget.cartItems}');
+          print('Error: Product ${item['id']} in ${item['symptom']} does not exist.');
+          setState(() => _message = 'One or more items in your cart are no longer available.');
+          return;
+        }
+
+        productSnapshots[item['id']] = doc;
+      }
+
+      final counterRef = FirebaseFirestore.instance.collection('metadata').doc('orderCounter');
+
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snapshot = await transaction.get(counterRef);
+        int lastOrderNumber = snapshot.exists ? (snapshot['lastOrderNumber'] ?? 0) : 0;
+        final newOrderNumber = lastOrderNumber + 1;
+        final orderId = 'ORD-${newOrderNumber.toString().padLeft(3, '0')}';
+
+        snapshot.exists
+            ? transaction.update(counterRef, {'lastOrderNumber': newOrderNumber})
+            : transaction.set(counterRef, {'lastOrderNumber': newOrderNumber});
+
+        final orderRef = FirebaseFirestore.instance.collection('orders').doc(orderId);
+        transaction.set(orderRef, {
+          'orderId': orderId,
+          'email': widget.email,
+          'name': widget.name,
+          'contact': widget.contact,
+          'address': widget.address,
+          'items': widget.cartItems,
+          'subtotal': widget.subtotal,
+          'shippingFee': widget.shippingFee,
+          'total': widget.total,
+          'paymentType': 'Debit/Credit Card',
+          'orderStatus': 'Order Placed',
+          'timestamp': Timestamp.now(),
+        });
+
+        for (final item in widget.cartItems) {
+          final qty = item['quantity'] ?? 1;
+          final String productId = item['id'];
+          final String symptom = item['symptom'];
+
+          final snapshot = productSnapshots[productId]!;
+          final currentStock = snapshot.get('stock');
+
+          if (currentStock is! num || currentStock < qty) {
+            throw Exception('Invalid or insufficient stock for $productId');
+          }
+
+          final productRef = FirebaseFirestore.instance
+              .collection('uncontrolled_medicine')
+              .doc('symptoms')
+              .collection(symptom)
+              .doc(productId);
+
+          transaction.update(productRef, {
+            'stock': FieldValue.increment(-qty),
+          });
+        }
+      });
+
+      final cartQuery = await FirebaseFirestore.instance
+          .collection('cart')
+          .where('email', isEqualTo: widget.email)
+          .get();
+
+      for (final doc in cartQuery.docs) {
+        final data = doc.data();
+        final List<dynamic> allItems = data['items'] ?? [];
+
+        // Get the product IDs that were purchased
+        final productIds = widget.cartItems.map((item) => item['id']).toSet();
+
+        // Keep only the items that were NOT purchased
+        final remainingItems = allItems.where((item) => !productIds.contains(item['id'])).toList();
+
+        // Update the cart with the remaining items
+        await doc.reference.update({'items': remainingItems});
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => OrderHistory()),
+      );
+    } catch (e) {
+      print('Transaction failed: $e');
+      setState(() => _message = 'Something went wrong. Please try again.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFE1D9D0),
+
+      body: Padding(
+        padding: const EdgeInsets.all(24.0).copyWith(top: 90),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.pushNamed(context, '/cart'),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                ),
+                const SizedBox(width: 40),
+                const Text(
+                  'OTP VERIFICATION',
+                  style: TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontFamily: 'Crimson',
+                    fontSize: 30,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 50),
+            Center(
+              child: Text(
+                'Enter the OTP sent to ${widget.email}',
+                style: const TextStyle(fontSize: 18, color: Color(0xFF6B4518)),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 30),
+            TextField(
+              controller: _otpController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              decoration: InputDecoration(
+                hintText: 'Enter OTP',
+                counterText: '',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                onPressed: _verifyOTP,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6B4518),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 32,
+                  ),
+                ),
+                child: const Text(
+                  'Verify',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: Text(
+                _message,
+                style: const TextStyle(fontSize: 16, color: Colors.red),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

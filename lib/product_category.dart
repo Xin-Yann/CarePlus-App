@@ -33,7 +33,7 @@ class ProductCategory extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => Navigator.pushNamed(context, '/home'),
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
                     color: Color(0xFF6B4518),
                   ),

@@ -88,7 +88,6 @@ class _ProfileState extends State<Profile> {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
         print("The user must reauthenticate before this operation can be executed.");
-        // TODO: Prompt user to reauthenticate (e.g., with email/password)
       } else {
         print("Error deleting account: ${e.message}");
       }

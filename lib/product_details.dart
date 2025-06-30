@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'cart.dart';
 
 class ProductDetails extends StatefulWidget {
   final String name;
   final String image;
   final String description;
   final String price;
+  final String symptom;
+  final String id;
 
   const ProductDetails({
     super.key,
+    required this.id,
     required this.name,
     required this.image,
     required this.description,
     required this.price,
+    required this.symptom
   });
 
   @override
@@ -159,48 +164,84 @@ class _ProductDetailsState extends State<ProductDetails> {
                     return;
                   }
 
+                  final cartRef = FirebaseFirestore.instance.collection('cart');
+                  final userEmail = user.email;
+
                   try {
-                    // Query for existing cart item with same product name and same user email
-                    final query = await FirebaseFirestore.instance
-                        .collection('cart')
-                        .where('email', isEqualTo: user.email)
-                        .where('name', isEqualTo: widget.name)
-                        .limit(1)
-                        .get();
+                    final userCartQuery = await cartRef.where('email', isEqualTo: userEmail).limit(1).get();
+                    final priceOnly = widget.price
+                        .replaceAll(RegExp(r'RM', caseSensitive: false), '')
+                        .replaceAll(RegExp(r'[^\d.]'), '')
+                        .trim();
 
-                    if (query.docs.isNotEmpty) {
-                      // Existing item found - update quantity by adding new quantity
-                      final doc = query.docs.first;
-                      final currentQty = doc['quantity'] ?? 0;
+                    print('widget.price = "${widget.price}"');
+                    print('Cleaned price = "$priceOnly"');
 
-                      await doc.reference.update({
-                        'quantity': currentQty + quantity,
+
+                    if (userCartQuery.docs.isEmpty) {
+                      // First time: create cart document with initial item
+                      await cartRef.add({
+                        'email': userEmail,
+                        'items': [
+                          {
+                            'id': widget.id,
+                            'name': widget.name,
+                            'image': widget.image,
+                            'description': widget.description,
+                            'price': priceOnly,
+                            'quantity': 1,
+                            'timestamp': Timestamp.now(),
+                            'symptom': widget.symptom,
+                          }
+                        ],
                         'timestamp': Timestamp.now(),
                       });
 
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${widget.name} is added into cart')),
+                        SnackBar(content: Text('${widget.name} added to cart')),
                       );
+
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => Cart()));
                     } else {
-                      // No existing item - add new doc with quantity
-                      await FirebaseFirestore.instance.collection('cart').add({
-                        'name': widget.name,
-                        'image': widget.image,
-                        'description': widget.description,
-                        'price': widget.price,
-                        'email': user.email,
-                        'quantity': quantity,
+                      final cartDoc = userCartQuery.docs.first;
+                      final docRef = cartDoc.reference;
+                      final data = cartDoc.data() as Map<String, dynamic>;
+                      final items = List<Map<String, dynamic>>.from(data['items'] ?? []);
+                      final index = items.indexWhere((item) => item['name'] == widget.name);
+
+                      if (index >= 0) {
+                        // Product already in cart, update quantity
+                        items[index]['quantity'] = (items[index]['quantity'] ?? 0) + 1;
+                        items[index]['timestamp'] = Timestamp.now();
+                      } else {
+                        // Add new product to cart
+                        items.add({
+                          'id': widget.id,
+                          'name': widget.name,
+                          'image': widget.image,
+                          'description': widget.description,
+                          'price': priceOnly,
+                          'quantity': 1,
+                          'timestamp': Timestamp.now(),
+                          'symptom': widget.symptom,
+                        });
+                      }
+
+                      await docRef.update({
+                        'items': items,
                         'timestamp': Timestamp.now(),
                       });
 
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${widget.name} is added into cart')),
+                        SnackBar(content: Text('${widget.name} added/updated in cart')),
                       );
+
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => Cart()));
                     }
                   } catch (e) {
-                    print('Error adding/updating cart: $e');
+                    print('Error updating cart: $e');
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to add item to cart')),
+                      const SnackBar(content: Text('Failed to update cart')),
                     );
                   }
                 },
