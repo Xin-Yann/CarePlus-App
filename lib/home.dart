@@ -13,7 +13,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final List<String> states = ['Kedah']; // Add more if needed
+  final List<String> states = ['Kedah'];
   Map<String, List<Map<String, dynamic>>> pharmacyData = {};
   List<Map<String, dynamic>> doctorData = [];
 

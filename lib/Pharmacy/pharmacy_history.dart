@@ -1,20 +1,23 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'footer.dart';
+import 'pharmacy_footer.dart';
 
-class OrderHistory extends StatefulWidget {
+class PharmacyHistory extends StatefulWidget {
   @override
-  State<OrderHistory> createState() => _OrderHistoryPageState();
+  State<PharmacyHistory> createState() => _OrderHistoryPageState();
 }
 
-class _OrderHistoryPageState extends State<OrderHistory>
+class _OrderHistoryPageState extends State<PharmacyHistory>
     with TickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController cardNo = TextEditingController();
   final TextEditingController expiryDate = TextEditingController();
   final TextEditingController cvv = TextEditingController();
+
   String selectedStatus = 'All';
   final List<String> orderStatusOptions = [
     'All',
@@ -43,7 +46,7 @@ class _OrderHistoryPageState extends State<OrderHistory>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE1D9D0),
-      bottomNavigationBar: const Footer(),
+      bottomNavigationBar: const PharmacyFooter(),
       body: Padding(
         padding: const EdgeInsets.all(8.0).copyWith(top: 70),
         child: Column(
@@ -52,12 +55,13 @@ class _OrderHistoryPageState extends State<OrderHistory>
             Row(
               children: [
                 IconButton(
-                  onPressed: () => Navigator.pushNamed(context, '/home'),
+                  onPressed:
+                      () => Navigator.pushNamed(context, '/pharmacy_home'),
                   icon: const Icon(Icons.arrow_back_ios_new_rounded),
                 ),
-                const SizedBox(width: 50),
+                const SizedBox(width: 100),
                 const Text(
-                  'ORDER HISTORY',
+                  'ORDERS',
                   style: TextStyle(
                     color: Color(0xFF6B4518),
                     fontFamily: 'Crimson',
@@ -68,7 +72,6 @@ class _OrderHistoryPageState extends State<OrderHistory>
             ),
             const SizedBox(height: 15),
 
-            //Tab bar
             TabBar(
               controller: _tabController,
               labelColor: const Color(0xFF6B4518),
@@ -102,18 +105,17 @@ class _OrderHistoryPageState extends State<OrderHistory>
                       }
                     },
                     items:
-                    orderStatusOptions.map((status) {
-                      return DropdownMenuItem<String>(
-                        value: status,
-                        child: Text(status),
-                      );
-                    }).toList(),
+                        orderStatusOptions.map((status) {
+                          return DropdownMenuItem<String>(
+                            value: status,
+                            child: Text(status),
+                          );
+                        }).toList(),
                   ),
                 ],
               ),
             ),
 
-            // Tab content
             Expanded(
               child: TabBarView(
                 controller: _tabController,
@@ -126,7 +128,6 @@ class _OrderHistoryPageState extends State<OrderHistory>
     );
   }
 
-  // Credit Card Tab Content
   Widget _buildCreditCardTab() {
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('orders')
@@ -149,9 +150,9 @@ class _OrderHistoryPageState extends State<OrderHistory>
         }
 
         final orders =
-        snap.data!.docs
-            .map((d) => d.data() as Map<String, dynamic>)
-            .toList();
+            snap.data!.docs
+                .map((d) => d.data() as Map<String, dynamic>)
+                .toList();
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -174,7 +175,6 @@ class _OrderHistoryPageState extends State<OrderHistory>
     if (selectedStatus != 'All') {
       query = query.where('orderStatus', isEqualTo: selectedStatus);
     }
-
     query = query.orderBy('timestamp', descending: true);
 
     return StreamBuilder<QuerySnapshot>(
@@ -188,9 +188,9 @@ class _OrderHistoryPageState extends State<OrderHistory>
         }
 
         final orders =
-        snap.data!.docs
-            .map((d) => d.data() as Map<String, dynamic>)
-            .toList();
+            snap.data!.docs
+                .map((d) => d.data() as Map<String, dynamic>)
+                .toList();
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -204,16 +204,60 @@ class _OrderHistoryPageState extends State<OrderHistory>
       },
     );
   }
+
+  // String _formatTimestamp(dynamic ts) {
+  //   if (ts is Timestamp) {
+  //     final dt = ts.toDate();
+  //     return '${dt.day}/${dt.month}/${dt.year}';
+  //   }
+  //   return '--';
+  // }
+  //
+  // String _formatTotal(dynamic value) {
+  //   if (value == null) return '--';
+  //   if (value is num) return value.toStringAsFixed(2);
+  //
+  //   if (value is String) {
+  //     final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '');
+  //     final parsed = double.tryParse(cleaned);
+  //     if (parsed != null) return parsed.toStringAsFixed(2);
+  //   }
+  //
+  //   return '--';
+  // }
 }
 
 class OrderCard extends StatelessWidget {
   const OrderCard(this.data, {Key? key}) : super(key: key);
   final Map<String, dynamic> data;
 
+  String generateTrackingNumber() {
+    const prefix = 'TR'; // <-- always at the front
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rand = Random.secure();
+
+    // 10 random chars + the 2‑char prefix = 12 total
+    final randomPart =
+        List.generate(10, (_) => chars[rand.nextInt(chars.length)]).join();
+
+    return '$prefix$randomPart';
+  }
+
+  Future<String> nextSequentialTracking(Transaction tx) async {
+    final counterRef = FirebaseFirestore.instance
+        .collection('meta')
+        .doc('trackingCounter');
+
+    final snap = await tx.get(counterRef);
+    final next = (snap.data()?['next'] ?? 100000) as int;
+    tx.update(counterRef, {'next': next + 1});
+    return next.toString().padLeft(6, '0'); // 6‑digit, zero‑padded
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 15),
+      margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
       child: ListTile(
         leading:
@@ -224,18 +268,17 @@ class OrderCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             Text('Total: RM ${_formatTotal(data['total'])}'),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'Placed At: ${_formatTimestamp(data['timestamp'])}',
               style: const TextStyle(fontSize: 12),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Row(
               children: [
-                Text('Order Status: ', style: const TextStyle(fontSize: 14)),
-
+                const Text('Order Status: ', style: TextStyle(fontSize: 14)),
                 Text(
                   '${data['orderStatus'] ?? 'N/A'}',
                   style: TextStyle(
@@ -261,13 +304,15 @@ class OrderCard extends StatelessWidget {
               ),
               SizedBox(height: 10),
             ],
+
             if (data['orderStatus'] == 'Delivered')
               Text('Delivered Date: ${_formatTimestamp(data['deliveryDate'])}'),
 
             if (data['orderStatus'] == 'Received')
-              Text('Received Date: ${_formatTimestamp(data['receivedDate'])}'),
-
-            SizedBox(height: 10),
+              Text(
+                'Received Date: ${_formatTimestamp(data['receivedDate'])}',
+                style: const TextStyle(fontSize: 12),
+              ),
           ],
         ),
         trailing: const Icon(Icons.chevron_right),
@@ -308,14 +353,13 @@ class OrderCard extends StatelessWidget {
                         'Placed At: ${_formatTimestamp(data['timestamp'])}',
                         style: const TextStyle(fontSize: 14),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
-                          Text(
+                          const Text(
                             'Order Status: ',
-                            style: const TextStyle(fontSize: 14),
+                            style: TextStyle(fontSize: 14),
                           ),
-
                           Text(
                             '${data['orderStatus'] ?? 'N/A'}',
                             style: TextStyle(
@@ -332,15 +376,14 @@ class OrderCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      SizedBox(height: 10),
-
+                      const SizedBox(height: 8),
                       if (data['orderStatus'] == 'Shipped') ...[
                         Text('Tracking Number: ${data['trackingNo']}'),
                         SizedBox(height: 10),
                         Text(
                           'Estimated Delivery: ${_formatTimestamp(data['deliveryDate'])}',
+                          style: const TextStyle(fontSize: 12),
                         ),
-                        SizedBox(height: 10),
                       ],
                       if (data['orderStatus'] == 'Delivered')
                         Text(
@@ -350,15 +393,14 @@ class OrderCard extends StatelessWidget {
                       if (data['orderStatus'] == 'Received')
                         Text(
                           'Received Date: ${_formatTimestamp(data['receivedDate'])}',
+                          style: const TextStyle(fontSize: 12),
                         ),
-
                       const Divider(),
                       const SizedBox(height: 12),
                       const Text(
                         'Items:',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-
                       const SizedBox(height: 12),
                       ...((data['items'] as List?)?.map((item) {
                             final itemMap = item as Map<String, dynamic>;
@@ -366,7 +408,6 @@ class OrderCard extends StatelessWidget {
                               padding: const EdgeInsets.only(top: 6, bottom: 8),
                               child: Row(
                                 children: [
-                                  // ── product image ──
                                   Image.network(
                                     itemMap['image'] ?? '',
                                     width: 60,
@@ -379,8 +420,6 @@ class OrderCard extends StatelessWidget {
                                         ),
                                   ),
                                   const SizedBox(width: 8),
-
-                                  // ── product name ──
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -393,15 +432,11 @@ class OrderCard extends StatelessWidget {
                                         const SizedBox(height: 5),
                                         Text(
                                           'Quantity: x${itemMap['quantity'] ?? 1}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.black,
-                                          ),
+                                          style: const TextStyle(fontSize: 12),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  // ── price ──
                                   Text(
                                     'RM ${_formatTotal(itemMap['price'])}',
                                     style: const TextStyle(
@@ -437,21 +472,57 @@ class OrderCard extends StatelessWidget {
                   ),
                 ),
                 actions: [
-                  if (data['orderStatus'] == 'Delivered')
+                  if (data['orderStatus'] == 'Order Placed')
                     TextButton(
+                      child: const Text('Order Shipped'),
                       onPressed: () async {
-                        final receivedDate = DateTime.now();
+                        Navigator.of(
+                          context,
+                        ).pop(); // close the dialog (optional)
+
+                        final trackingNo = generateTrackingNumber();
+                        final rand = Random.secure();
+                        final daysToAdd = 3 + rand.nextInt(3);
+                        final deliveryDate = DateTime.now().add(
+                          Duration(days: daysToAdd),
+                        );
+
                         await FirebaseFirestore.instance
                             .collection('orders')
-                            .doc(data['orderId'])
+                            .doc(
+                              data['orderId'],
+                            ) // make sure this really *is* the doc‑id
                             .update({
-                              'orderStatus': 'Received',
-                              'receivedDate': Timestamp.fromDate(receivedDate),
+                              'orderStatus': 'Shipped',
+                              'trackingNo': trackingNo,
+                              'deliveryDate': Timestamp.fromDate(deliveryDate),
+                              // 'trackingUrl': tracking['trackingUrl'],
                             });
-
-                        Navigator.of(context).pop();
                       },
-                      child: const Text('Received'),
+                    ),
+
+                  if (data['orderStatus'] ==
+                      'Shipped') // ← comparison, not assignment
+                    TextButton(
+                      child: Text('Delivered'),
+                      onPressed: () async {
+                        Navigator.of(context).pop(); // close the dialog
+
+                        // OPTIONAL: simulate 3‑5 days after “Shipped” if you still want that
+                        final rand = Random.secure();
+                        final daysToAdd = 3 + rand.nextInt(3); // 3, 4, or 5
+                        final deliveredDate = DateTime.now().add(
+                          Duration(days: daysToAdd),
+                        );
+
+                        await FirebaseFirestore.instance
+                            .collection('orders')
+                            .doc(data['orderId']) // real doc‑id
+                            .update({
+                              'orderStatus': 'Delivered',
+                              'deliveryDate': Timestamp.fromDate(deliveredDate),
+                            });
+                      },
                     ),
 
                   TextButton(
@@ -477,17 +548,12 @@ class OrderCard extends StatelessWidget {
 
   String _formatTotal(dynamic value) {
     if (value == null) return '--';
-
-    // already a number
     if (value is num) return value.toStringAsFixed(2);
-
-    // try to parse a string, stripping “RM”, commas, etc.
     if (value is String) {
       final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '');
       final parsed = double.tryParse(cleaned);
       if (parsed != null) return parsed.toStringAsFixed(2);
     }
-
-    return '--'; // fallback
+    return '--';
   }
 }
