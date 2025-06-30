@@ -1,15 +1,62 @@
 import 'package:flutter/material.dart';
 import 'messaging_session_booking.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class SpecialistDoctorDetails extends StatelessWidget {
+class SpecialistDoctorDetails extends StatefulWidget {
   final Map<String, dynamic> doctor;
 
   const SpecialistDoctorDetails({super.key, required this.doctor});
 
   @override
+  State<SpecialistDoctorDetails> createState() => _SpecialistDoctorDetailsState();
+}
+
+class _SpecialistDoctorDetailsState extends State<SpecialistDoctorDetails> {
+  String? _customUserId;
+  bool _loadingUserId = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCustomUserId();
+  }
+
+  Future<void> _fetchCustomUserId() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() => _loadingUserId = false);
+      return;
+    }
+
+    final userEmail = user.email;
+
+    final snapshot = await FirebaseFirestore.instance.collection('users').get();
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if (data['email'] == userEmail) {
+        setState(() {
+          _customUserId = doc.id; // U1, U2, etc.
+          _loadingUserId = false;
+        });
+        return;
+      }
+    }
+
+    setState(() => _loadingUserId = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final doctor = widget.doctor;
     final imageUrl = doctor['imageUrl']?.toString() ?? '';
+
+    if (_loadingUserId) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFE1D9D0),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFE1D9D0),
@@ -64,16 +111,14 @@ class SpecialistDoctorDetails extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: ElevatedButton(
-              onPressed: () async {
-                final user = FirebaseAuth.instance.currentUser;
-                if (user == null) {
+              onPressed: () {
+                if (_customUserId == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('You must be logged in')),
+                    const SnackBar(content: Text('User ID not found')),
                   );
                   return;
                 }
 
-                // Safely retrieve doctorId
                 final String? doctorId = doctor['doctor_id']?.toString() ?? doctor['docId']?.toString();
 
                 if (doctorId == null || doctorId.isEmpty) {
@@ -88,7 +133,7 @@ class SpecialistDoctorDetails extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => MessagingSessionBooking(
                       doctorId: doctorId,
-                      userId: user.uid,
+                      userId: _customUserId!,
                     ),
                   ),
                 );

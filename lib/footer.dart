@@ -48,6 +48,11 @@ class Footer extends StatelessWidget {
               _FooterItem(
                 imagePath: 'asset/image/messenger.png',
                 label: 'Message',
+
+//                 route: '/chat_with_doctor',
+//                 width: 26,
+//                 height: 26,
+
                 //route: '/home',
                 onTap: () {
                   Navigator.pushReplacement(
@@ -57,6 +62,7 @@ class Footer extends StatelessWidget {
                 },
                 width: 30,
                 height: 30,
+
               ),
               Column(
                 children: [
