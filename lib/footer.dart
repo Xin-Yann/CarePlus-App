@@ -2,6 +2,7 @@ import 'package:careplusapp/home.dart';
 import 'package:careplusapp/product_category.dart';
 import 'package:careplusapp/profile.dart';
 import 'package:flutter/material.dart';
+import 'chat_with_doctor.dart';
 import 'order_history.dart';
 
 class Footer extends StatelessWidget {
@@ -57,7 +58,7 @@ class Footer extends StatelessWidget {
                 onTap: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => OrderHistory()),
+                    MaterialPageRoute(builder: (context) => ChatWithDoctor()),
                   );
                 },
                 width: 30,
