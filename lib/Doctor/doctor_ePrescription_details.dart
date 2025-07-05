@@ -52,8 +52,18 @@ class DoctorePrescriptionDetails extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        "${patientName.toString().toUpperCase()}'S E-PRESCRIPTION",
+                        "${patientName.toString().toUpperCase()}'S",
                         style: const TextStyle(
+                          color: Color(0xFF6B4518),
+                          fontFamily: 'Crimson',
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const Text(
+                        "E-PRESCRIPTION",
+                        style: TextStyle(
                           color: Color(0xFF6B4518),
                           fontFamily: 'Crimson',
                           fontSize: 28,
@@ -67,7 +77,7 @@ class DoctorePrescriptionDetails extends StatelessWidget {
               ),
             ),
 
-            // Session Info in one line
+            // Session Info
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -87,10 +97,14 @@ class DoctorePrescriptionDetails extends StatelessWidget {
                     .where('sessionId', isEqualTo: sessionId)
                     .snapshots(),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
                   final docs = snapshot.data!.docs;
-                  if (docs.isEmpty) return const Center(child: Text('No prescriptions found.'));
+                  if (docs.isEmpty) {
+                    return const Center(child: Text('No prescriptions found.'));
+                  }
 
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
@@ -99,65 +113,93 @@ class DoctorePrescriptionDetails extends StatelessWidget {
                       final prescription = docs[index].data() as Map<String, dynamic>;
                       final drugId = prescription['drugId'];
                       final symptom = prescription['symptom'];
+                      final strength = prescription['strength'];
 
-                      return symptom != null
-                          ? FutureBuilder<DocumentSnapshot>(
+                      if (symptom == null || drugId == null || strength == null) {
+                        return const Text('❌ Missing data.');
+                      }
+
+                      return FutureBuilder<DocumentSnapshot>(
                         future: FirebaseFirestore.instance
                             .collection('controlled_medicine')
                             .doc('symptoms')
                             .collection(symptom)
                             .doc(drugId)
                             .get(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
+                        builder: (context, drugSnapshot) {
+                          if (drugSnapshot.connectionState == ConnectionState.waiting) {
                             return const Padding(
                               padding: EdgeInsets.symmetric(vertical: 12),
                               child: Center(child: CircularProgressIndicator()),
                             );
                           }
 
-                          if (snapshot.hasError) {
+                          if (drugSnapshot.hasError) {
                             return const Text('Error fetching drug details.');
                           }
 
-                          if (!snapshot.hasData || snapshot.data!.data() == null) {
+                          if (!drugSnapshot.hasData || drugSnapshot.data!.data() == null) {
                             return const Text('Drug information not found.');
                           }
 
-                          final data = snapshot.data!.data() as Map<String, dynamic>;
+                          final data = drugSnapshot.data!.data() as Map<String, dynamic>;
                           final drugName = data['name'] ?? 'Unknown Drug';
-                          final price = data['price'] ?? '-';
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5EFE6),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  drugName,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF6B4518),
-                                  ),
+                          // Now, get the strength price
+                          return FutureBuilder<DocumentSnapshot>(
+                            future: FirebaseFirestore.instance
+                                .collection('controlled_medicine')
+                                .doc('symptoms')
+                                .collection(symptom)
+                                .doc(drugId)
+                                .collection('Strength')
+                                .doc(strength)
+                                .get(),
+                            builder: (context, strengthSnapshot) {
+                              if (strengthSnapshot.connectionState == ConnectionState.waiting) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  child: Center(child: CircularProgressIndicator()),
+                                );
+                              }
+
+                              String price = '-';
+                              if (strengthSnapshot.hasData && strengthSnapshot.data!.exists) {
+                                final strengthData = strengthSnapshot.data!.data() as Map<String, dynamic>;
+                                price = strengthData['price']?.toString() ?? '-';
+                              }
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5EFE6),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                const SizedBox(height: 8),
-                                Text('Strength: ${prescription['strength'] ?? '-'}'),
-                                Text('Quantity: ${prescription['quantity'] ?? '-'}'),
-                                Text('Refill: ${prescription['refill'] ?? '-'}'),
-                                Text('Sig: ${prescription['sig'] ?? '-'}'),
-                                Text('Price: RM $price'),
-                              ],
-                            ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      drugName,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF6B4518),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text('Strength: ${strength}'),
+                                    Text('Quantity: ${prescription['quantity'] ?? '-'}'),
+                                    Text('Refill: ${prescription['refill'] ?? '-'}'),
+                                    Text('Sig: ${prescription['sig'] ?? '-'}'),
+                                    Text('Price: RM $price'),
+                                  ],
+                                ),
+                              );
+                            },
                           );
                         },
-                      )
-                          : const Text('❌ Symptom missing — cannot fetch drug info.');
+                      );
                     },
                   );
                 },

@@ -35,6 +35,8 @@ import 'package:careplusapp/Doctor/doctor_ePrescription_medList.dart';
 import 'package:careplusapp/Doctor/doctor_add_ePrescription.dart';
 import 'package:careplusapp/Doctor/doctor_ePrescription_details.dart';
 import 'package:careplusapp/e-Prescription.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_manage_product.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_add_product.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,7 +91,7 @@ class _MyAppState extends State<MyApp> {
         '/pharmacy_privacy':(context) => PharmacyPrivacyPolicy(),
         '/pharmacy_terms_condition':(context) => PharmacyTermsCondition(),
         '/pharmacy_manage_product':(context) => PharmacyManageProduct(),
-        //'/pharmacy_add_product':(context) => PharmacyAddProduct(),
+        '/pharmacy_add_product':(context) => PharmacyAddProduct(),
         '/chat_with_doctor':(context) => ChatWithDoctor(),
         '/chat_with_patient':(context) => ChatWithPatient(),
         '/doctor_ePrescription_patient':(context) => DoctorePrescriptionPatient(),

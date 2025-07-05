@@ -289,6 +289,7 @@ class _ePrescriptionPageState extends State<ePrescriptionPage> {
                 right: 16,
                 bottom: 20,
               ),
+              
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -305,7 +306,7 @@ class _ePrescriptionPageState extends State<ePrescriptionPage> {
                     ),
                   ),
                   const Text(
-                    "E-PRESCRIPTION",
+                    "MY E-PRESCRIPTION",
                     style: TextStyle(
                       color: brown,
                       fontFamily: 'Crimson',

@@ -3,20 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class Footer extends StatelessWidget {
-  const Footer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 50,
-      color: Colors.grey[300],
-      alignment: Alignment.center,
-      child: const Text('Footer here'),
-    );
-  }
-}
-
 class PharmacyList extends StatefulWidget {
   const PharmacyList({super.key});
 
@@ -203,7 +189,6 @@ class _PharmacyListState extends State<PharmacyList> {
           ],
         ),
       ),
-      bottomNavigationBar: const Footer(),
     );
   }
 
