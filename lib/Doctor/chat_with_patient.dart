@@ -77,7 +77,7 @@ class _ChatWithPatientState extends State<ChatWithPatient> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () =>  Navigator.pushNamed(context, '/doctor_home'),
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
                     color: Color(0xFF6B4518),
                   ),

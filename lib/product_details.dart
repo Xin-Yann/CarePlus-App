@@ -10,6 +10,8 @@ class ProductDetails extends StatefulWidget {
   final String price;
   final String symptom;
   final String id;
+  final String type;
+  final int stock;
 
   const ProductDetails({
     super.key,
@@ -18,7 +20,9 @@ class ProductDetails extends StatefulWidget {
     required this.image,
     required this.description,
     required this.price,
-    required this.symptom
+    required this.symptom,
+    required this.stock,
+    required this. type,
   });
 
   @override
@@ -153,9 +157,13 @@ class _ProductDetailsState extends State<ProductDetails> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.shopping_cart),
-                label: const Text('Add to Cart'),
-                onPressed: () async {
+                icon: widget.stock > 0
+                    ? const Icon(Icons.shopping_cart)
+                    : const SizedBox.shrink(),
+
+                label: Text(widget.stock > 0 ? 'Add to Cart' : 'Out of Stock'),
+                onPressed: widget.stock > 0
+                    ?  () async {
                   final user = FirebaseAuth.instance.currentUser;
                   if (user == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -192,6 +200,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                             'quantity': 1,
                             'timestamp': Timestamp.now(),
                             'symptom': widget.symptom,
+                            'type': 'uncontrolled'
                           }
                         ],
                         'timestamp': Timestamp.now(),
@@ -224,6 +233,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                           'quantity': 1,
                           'timestamp': Timestamp.now(),
                           'symptom': widget.symptom,
+                          'type': 'uncontrolled'
                         });
                       }
 
@@ -244,7 +254,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                       const SnackBar(content: Text('Failed to update cart')),
                     );
                   }
-                },
+                } : null,
 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: brownColor,

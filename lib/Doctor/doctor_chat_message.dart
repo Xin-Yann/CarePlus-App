@@ -86,7 +86,7 @@ class _DoctorChatMessageState extends State<DoctorChatMessage> {
           .collection('messages')
           .add({
         'text': text.trim(),
-        'timestamp': DateTime.now(), // Immediate display
+        'timestamp': DateTime.now(),
         'senderId': doctorId,
         'sessionId': widget.sessionId,
       });

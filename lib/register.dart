@@ -166,17 +166,51 @@ class _RegisterState extends State<Register> {
             ),
 
             //Name
-            CustomTextField(
-              hintText: 'Name',
-              valueController: name,
-              onChanged: () {},
+            // CustomTextField(
+            //   hintText: 'Name',
+            //   valueController: name,
+            //   onChanged: () {},
+            // ),
+
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                width: 370,
+                height: 60,
+                child: TextField(
+                  controller: name,
+                  decoration: InputDecoration(
+                    hintText: 'Name',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[500],
+                      fontStyle: FontStyle.italic,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(
+                        color: Colors.white,
+                      ), // Border when focused
+                    ),
+                  ),
+                ),
+              ),
             ),
 
             //Birth Date
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(
-                width: 382,
+                width: 370,
                 height: 60,
                 child: TextField(
                   controller: birthDate,
@@ -224,7 +258,7 @@ class _RegisterState extends State<Register> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(
-                width: 382,
+                width: 370,
                 height: 60,
                 child: TextField(
                   controller: ic,
@@ -264,7 +298,7 @@ class _RegisterState extends State<Register> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(
-                width: 382,
+                width: 370,
                 height: 60,
                 child: TextField(
                   controller: contact,
@@ -301,17 +335,52 @@ class _RegisterState extends State<Register> {
             ),
 
             //Email
-            CustomTextField(
-              hintText: 'Email',
-              valueController: email,
-              onChanged: () {},
+            // CustomTextField(
+            //   hintText: 'Email',
+            //   valueController: email,
+            //   onChanged: () {},
+            // ),
+
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                width: 370,
+                height: 60,
+                child: TextField(
+                  controller: email,
+                  decoration: InputDecoration(
+                    hintText: 'Email',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[500],
+                      fontStyle: FontStyle.italic,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(color: Colors.white),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide(
+                        color: Colors.white,
+                      ), // Border when focused
+                    ),
+                  ),
+                ),
+              ),
             ),
+
 
             //Password
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(
-                width: 382,
+                width: 370,
                 height: 60,
                 child: TextField(
                   controller: password,
@@ -456,7 +525,7 @@ class _RegisterState extends State<Register> {
               ),
 
             Padding(
-              padding: const EdgeInsets.all(8.0).copyWith(top: 25.0),
+              padding: const EdgeInsets.all(8.0).copyWith(top: 25.0, bottom: 20.0),
               child: ElevatedButton(
                 onPressed: () {
                   _registerUser();

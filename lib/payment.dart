@@ -1,4 +1,5 @@
 import 'package:careplusapp/otp.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,6 +7,7 @@ import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'order_history.dart';
+import 'package:intl/intl.dart';
 
 class PaymentPage extends StatefulWidget {
   final List<Map<String, dynamic>> cartItems;
@@ -30,6 +32,7 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  final TextEditingController cardName = TextEditingController();
   final TextEditingController cardNo = TextEditingController();
   final TextEditingController expiryDate = TextEditingController();
   final TextEditingController cvv = TextEditingController();
@@ -65,12 +68,23 @@ class _PaymentPageState extends State<PaymentPage>
     return _calculateSubtotal() + _calculateShippingFee();
   }
 
+  /// Generates a 6-digit OTP and sets expiry for 10 minutes
+  late String _otp;
+  late DateTime _expiryTime;
+
   String generateOTP() {
     final random = Random();
-    return (100000 + random.nextInt(900000)).toString(); // 6-digit OTP
+    _otp = (100000 + random.nextInt(900000)).toString();
+    _expiryTime = DateTime.now().add(const Duration(minutes: 10));
+    return _otp;
   }
 
-  Future<void> sendOtpToEmail(String email, String name, String otp) async {
+  Future<void> sendOtpToEmail({
+    required String email,
+    required String name,
+    required String otp,
+    required String expiry,
+  }) async {
     const serviceId = 'service_ug3yy5l';
     const templateId = 'template_mtee97c';
     const userId = 'Zp05uSYdpxgcXjWlR';
@@ -91,14 +105,99 @@ class _PaymentPageState extends State<PaymentPage>
           'user_email': email,
           'user_name': name,
           'otp': otp,
+          'expiry': expiry,
         },
       }),
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Failed to send OTP email');
+      throw Exception('Failed to send OTP email: ${response.body}');
     }
   }
+
+  Map<String, dynamic>? pharmacyData;
+  String? _pharmacyState;
+  String? _pharmacyId;
+  Map<String, List<String>> stateDocIds = {
+    "Perlis": ["P1", "P2", "P3"],
+    "Kedah": ["P4", "P5", "P6"],
+    "Penang": ["P7", "P8", "P9"],
+    "Perak": ["P10", "P11", "P12"],
+    "Selangor": ["P13", "P14", "P15"],
+    "Negeri Sembilan": ["P16", "P17", "P18"],
+    "Melaka": ["P19", "P20", "P21"],
+    "Kelantan": ["P22", "P23", "P24"],
+    "Terengganu": ["P25", "P26", "P27"],
+    "Pahang": ["P28", "P29", "P30"],
+    "Johor": ["P31", "P32", "P33"],
+    "Sabah": ["P34", "P35", "P36"],
+    "Sarawak": ["P37", "P38", "P39"],
+  };
+
+  Future<void> fetchPharmacyData() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null || user.email == null) {
+      print('User is not logged in or missing email.');
+      return;
+    }
+
+    final Useremail = user.email!;
+
+
+    for (final entry in stateDocIds.entries) {
+      final state = entry.key;
+      for (final id in entry.value) {
+        final doc = await FirebaseFirestore.instance
+            .collection('pharmacy')
+            .doc('state')
+            .collection(state)
+            .doc(id)
+            .get();
+
+        if (doc.exists) {
+          final data = doc.data() as Map<String, dynamic>?;
+
+          if (data != null && data.containsKey('email')) {
+            print('Checking ${state} / ${id} -> Email: ${data['email']}');
+            if (data['email'] == Useremail) {
+              setState(() {
+                _pharmacyState = state;
+                _pharmacyId = id;
+              });
+              print('Match found in ${state} / ${id}');
+              return;
+            }
+          }
+        }
+
+      }
+    }
+
+    print('Pharmacy record not found.');
+  }
+
+  String? _extractState(String address) {
+    for (final state in stateDocIds.keys) {
+      if (address.toLowerCase().contains(state.toLowerCase())) {
+        return state;
+      }
+    }
+    return null;
+  }
+
+  String? _assignPharmacyId(String address) {
+    final state = _extractState(address);
+    if (state == null) return null;
+
+    final ids = stateDocIds[state];
+    if (ids == null || ids.isEmpty) return null;
+
+    // Simple round‑robin: spread the load fairly each time an order comes in.
+    final index = DateTime.now().millisecondsSinceEpoch % ids.length;
+    return ids[index];
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -108,7 +207,7 @@ class _PaymentPageState extends State<PaymentPage>
         body: DefaultTabController(
           length: 2,
           child: Padding(
-            padding: const EdgeInsets.all(8.0).copyWith(top: 70),
+            padding: const EdgeInsets.all(8.0).copyWith(top: 40),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -151,22 +250,54 @@ class _PaymentPageState extends State<PaymentPage>
                                     horizontal: 16,
                                     vertical: 8,
                                   ),
-                                  child: ListTile(
-                                    leading: Image.network(
-                                      item['image'] ?? '',
-                                      width: 60,
-                                      height: 60,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const Icon(
-                                                Icons.image_not_supported,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: ListTile(
+                                      leading: Image.network(
+                                        item['image'] ?? '',
+                                        width: 60,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          // Fallback to asset image
+                                          return Image.asset(
+                                            'asset/image/weblogo.png',
+                                            width: 60,
+                                            height: 60,
+                                            fit: BoxFit.cover,
+                                          );
+                                        },
+                                      ),
+
+                                      title: Text(item['name'] ?? 'Unnamed Drug'),
+                                      subtitle: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          if (item['type'] == 'prescription') ...[
+                                            const SizedBox(height:10),
+                                            Text(
+                                              'Strength: ${item['strength'] ?? 'Unknown'}',
+                                              style: const TextStyle(
+                                                color: Colors.black,
                                               ),
-                                    ),
-                                    title: Text(item['name']),
-                                    subtitle: Text("Quantity: $quantity"),
-                                    trailing: Text(
-                                      "RM ${total.toStringAsFixed(2)}",
+                                            ),
+                                          ],
+                                          const SizedBox(height: 10),
+                                          Text("Quantity: $quantity"),
+
+                                        ],
+                                      ),
+                                      trailing: Text(
+                                        "RM ${total.toStringAsFixed(2)}",
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 );
@@ -275,108 +406,154 @@ class _PaymentPageState extends State<PaymentPage>
                     }
 
                     try {
-                      await sendOtpToEmail(widget.email, widget.name, otp);
+                      final otp = generateOTP();
+                      final formattedExpiry = DateFormat(
+                        'hh:mm a, MMM dd',
+                      ).format(_expiryTime);
+
+                      await sendOtpToEmail(
+                        email: widget.email,
+                        name: widget.name,
+                        otp: otp,
+                        expiry: formattedExpiry,
+                      );
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => OTPPage(
-                            cartItems: widget.cartItems,
-                            name: widget.name,
-                            email: widget.email,
-                            contact: widget.contact,
-                            address: widget.address,
-                            subtotal: _calculateSubtotal(),
-                            shippingFee: _calculateShippingFee(),
-                            total: _calculateTotal(),
-                            otp: otp,
-                          ),
+                          builder:
+                              (context) => OTPPage(
+                                cartItems: widget.cartItems,
+                                name: widget.name,
+                                email: widget.email,
+                                contact: widget.contact,
+                                address: widget.address,
+                                subtotal: _calculateSubtotal(),
+                                shippingFee: _calculateShippingFee(),
+                                total: _calculateTotal(),
+                                otp: otp, // 6‑digit code
+                                expiry: _expiryTime,
+                              ),
                         ),
                       );
-
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("Failed to send OTP: $e")),
                       );
                     }
-
                   } else if (currentTabIndex == 1) {
                     // 💰 E-Wallet tab
-                    // Save order to Firestore
-                    final Map<String, DocumentSnapshot> productSnapshots = {};
-                    for (final item in widget.cartItems) {
-                      final productRef = FirebaseFirestore.instance
-                          .collection('uncontrolled_medicine')
-                          .doc('symptoms')
-                          .collection(item['symptom'])
-                          .doc(item['id']);
+                    // 1️⃣ Pre-fetch all product documents BEFORE transaction
+                    final Map<String, Map<String, dynamic>> productDataMap = {};
+                    final Map<String, DocumentReference> productRefMap = {};
 
-                      final doc = await productRef.get();
-                      if (!doc.exists) {
-                        setState(() {
-                          print('cartItems → ${widget.cartItems}');
-                          print( 'Error: Product ${item['id']} in ${item['symptom']} does not exist.');
-                        });
-                        return;
+                    for (final item in widget.cartItems) {
+                      final qty = item['quantity'] ?? 1;
+                      final symptom = item['symptom']?.toString();
+                      final drugId = (item['drugId'] ?? item['id'])?.toString();
+                      final strength = item['strength']?.toString();
+                      final isPrescription = item['type'] == 'prescription';
+
+                      if ([symptom, drugId].any((v) => v == null || v.isEmpty)) {
+                        print('⚠️ Skipping invalid cart item: $item');
+                        continue;
                       }
 
-                      productSnapshots[item['id']] = doc;
+                      final collection = isPrescription ? 'controlled_medicine' : 'uncontrolled_medicine';
+                      final productRef = isPrescription
+                          ? FirebaseFirestore.instance
+                          .collection(collection)
+                          .doc('symptoms')
+                          .collection(symptom!)
+                          .doc(drugId!)
+                          .collection('Strength')
+                          .doc(strength!)
+                          : FirebaseFirestore.instance
+                          .collection(collection)
+                          .doc('symptoms')
+                          .collection(symptom!)
+                          .doc(drugId!);
 
+                      try {
+                        final snapshot = await productRef.get();
+                        if (snapshot.exists) {
+                          final data = snapshot.data();
+                          if (data != null && data.containsKey('stock')) {
+                            productDataMap[drugId!] = data;
+                            productRefMap[drugId] = productRef;
+                            print('Pre-fetched $productRef: $data');
+                          } else {
+                            print('Missing "stock" in $productRef');
+                            throw Exception('Missing "stock" field');
+                          }
+                        } else {
+                          print('Product document not found: $productRef');
+                          throw Exception('Document not found');
+                        }
+                      } catch (e) {
+                        print('Error fetching $productRef: $e');
+                        throw e;
+                      }
                     }
 
-                    final counterRef = FirebaseFirestore.instance.collection('metadata').doc('orderCounter');
-
+// 2️⃣ Run transaction using cached data
                     await FirebaseFirestore.instance.runTransaction((transaction) async {
-                      final snapshot = await transaction.get(counterRef);
-                      int lastOrderNumber = snapshot.exists ? (snapshot['lastOrderNumber'] ?? 0) : 0;
+                      final counterRef = FirebaseFirestore.instance.collection('metadata').doc('orderCounter');
+                      final counterSnap = await transaction.get(counterRef);
+                      final lastOrderNumber = counterSnap.exists ? (counterSnap['lastOrderNumber'] ?? 0) : 0;
                       final newOrderNumber = lastOrderNumber + 1;
                       final orderId = 'ORD-${newOrderNumber.toString().padLeft(3, '0')}';
 
-                      if (snapshot.exists) {
-                        transaction.update(counterRef, {'lastOrderNumber': newOrderNumber});
-                      } else {
-                        transaction.set(counterRef, {'lastOrderNumber': newOrderNumber});
+                      transaction.set(counterRef, {'lastOrderNumber': newOrderNumber});
+
+                      // Create order document
+                      final orderRef = FirebaseFirestore.instance.collection('orders').doc(orderId);
+                      final assignedId = _assignPharmacyId(widget.address);
+                      if (assignedId == null) {
+                        throw Exception('No pharmacy found for address: ${widget.address}');
                       }
 
-                      final orderRef = FirebaseFirestore.instance.collection('orders').doc(orderId);
                       transaction.set(orderRef, {
-                        'orderId': orderId,
-                        'email': widget.email,
-                        'name': widget.name,
-                        'contact': widget.contact,
-                        'address': widget.address,
-                        'items': widget.cartItems,
-                        'subtotal': _calculateSubtotal(),
-                        'shippingFee': _calculateShippingFee(),
-                        'total': _calculateTotal(),
-                        'paymentType': 'TNG',
-                        'orderStatus': 'Order Placed',
-                        'timestamp': Timestamp.now(),
+                        'orderId'          : orderId,
+                        'email'            : widget.email,
+                        'name'             : widget.name,
+                        'contact'          : widget.contact,
+                        'address'          : widget.address,
+                        'items'            : widget.cartItems,
+                        'subtotal'         : _calculateSubtotal(),
+                        'shippingFee'      : _calculateShippingFee(),
+                        'total'            : _calculateTotal(),
+                        'paymentType'      : 'TNG',
+                        'orderStatus'      : 'Order Placed',
+                        'assignedPharmacyId'  : assignedId,
+                        'assignedState'       : _extractState(widget.address),
+                        'timestamp'        : Timestamp.now(),
                       });
 
-                      //Deduct stock after make payment
+                      // Deduct stock
                       for (final item in widget.cartItems) {
                         final qty = item['quantity'] ?? 1;
-                        final String productId = item['id'];
-                        final String symptom = item['symptom'];
+                        final drugId = (item['drugId'] ?? item['id'])?.toString() ?? '';
 
-                        final productRef = FirebaseFirestore.instance
-                            .collection('uncontrolled_medicine')
-                            .doc('symptoms')
-                            .collection(symptom)
-                            .doc(productId);
+                        final currentData = productDataMap[drugId];
+                        final productRef = productRefMap[drugId];
 
-                        final snapshot = productSnapshots[productId]!;
-                        final currentStock = snapshot.get('stock');
-
-                        if (currentStock is! num || currentStock < qty) {
-                          throw Exception('Invalid or insufficient stock for $productId');
+                        if (currentData == null || productRef == null) {
+                          throw Exception('No product data/ref found for $drugId');
                         }
 
+                        final currentStock = currentData['stock'];
+                        if (currentStock is! num || currentStock < qty) {
+                          throw Exception('Insufficient stock for $drugId (stock: $currentStock, qty: $qty)');
+                        }
+
+                        print('✅ Deducting $qty from $productRef (stock: $currentStock)');
                         transaction.update(productRef, {
                           'stock': FieldValue.increment(-qty),
                         });
                       }
 
+                      // Remove items from cart
                       final cartQuery = await FirebaseFirestore.instance
                           .collection('cart')
                           .where('email', isEqualTo: widget.email)
@@ -386,19 +563,25 @@ class _PaymentPageState extends State<PaymentPage>
                         final data = doc.data();
                         final List<dynamic> allItems = data['items'] ?? [];
 
-                        // Get the product IDs that were purchased
-                        final productIds = widget.cartItems.map((item) => item['id']).toSet();
+                        final purchasedIds = widget.cartItems
+                            .map((item) => (item['drugId'] ?? item['id']).toString())
+                            .toSet();
 
-                        // Keep only the items that were NOT purchased
-                        final remainingItems = allItems.where((item) => !productIds.contains(item['id'])).toList();
+                        final remainingItems = allItems.where((item) {
+                          final key = (item['drugId'] ?? item['id']).toString();
+                          return !purchasedIds.contains(key);
+                        }).toList();
 
-                        // Update the cart with the remaining items
                         await doc.reference.update({'items': remainingItems});
                       }
-
                     });
 
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => OrderHistory()));
+                    print('Transaction completed successfully!');
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => OrderHistory()),
+                    );
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -426,6 +609,31 @@ class _PaymentPageState extends State<PaymentPage>
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
+          const SizedBox(height: 16),
+          TextField(
+            controller: cardName,
+            decoration: InputDecoration(
+              hintText: 'Card Holder Name',
+              hintStyle: TextStyle(
+                color: Colors.grey[500],
+                fontStyle: FontStyle.italic,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: const BorderSide(color: Colors.white),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30),
+                borderSide: const BorderSide(color: Colors.white),
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           TextField(
             keyboardType: TextInputType.number,
@@ -537,6 +745,7 @@ class _PaymentPageState extends State<PaymentPage>
       children: [
         Column(
           children: [
+            SizedBox(height: 40),
             Image.asset(
               'asset/image/tng.png',
               width: 300,
@@ -553,9 +762,9 @@ class _PaymentPageState extends State<PaymentPage>
 class CardNumberInputFormat extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue,
-      TextEditingValue newValue,
-      ) {
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
     String formatted = '';
 
@@ -594,4 +803,3 @@ class CardNumberInputFormat extends TextInputFormatter {
     );
   }
 }
-

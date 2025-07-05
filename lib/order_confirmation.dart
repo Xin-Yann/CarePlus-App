@@ -57,6 +57,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final quantity = item['quantity'] ?? 1;
       final price = double.tryParse(item['price'].toString()) ?? 0.0;
       total += price * quantity;
+
     }
     return total;
   }
@@ -156,7 +157,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(8.0).copyWith(top: 70),
+        padding: const EdgeInsets.all(8.0).copyWith(top: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -246,7 +247,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         vertical: 10,
                       ),
                       child: Container(
-                        height: 120,
                         padding: const EdgeInsets.all(12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,14 +257,28 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                 width: 60,
                                 height: 60,
                                 fit: BoxFit.cover,
-                                errorBuilder:
-                                    (context, error, stackTrace) =>
-                                        const Icon(Icons.image_not_supported),
+                                errorBuilder: (context, error, stackTrace) {
+                                  // Fallback to asset image
+                                  return Image.asset(
+                                    'asset/image/weblogo.png',
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                  );
+                                },
                               ),
+
                               title: Text(item['name']),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  if (item['type'] == 'prescription') ...[
+                                    SizedBox(height: 10),
+                                    Text(
+                                      'Strength: ${item['strength'] ?? 'Unknown'}',
+                                        style: const TextStyle(color: Colors.black)
+                                    ),
+                                  ],
                                   const SizedBox(height: 10),
                                   Text(
                                     'Quantity: ${item['quantity']}',

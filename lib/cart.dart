@@ -12,188 +12,100 @@ class Cart extends StatefulWidget {
 
 class _CartState extends State<Cart> {
   late Future<List<Map<String, dynamic>>> _cartItemsFuture;
-  List<Map<String, dynamic>> cartItems = [];
-  Map<String, bool> itemChecked = {};
-  Map<String, int> itemQuantity = {};
+
+  final List<Map<String, dynamic>> cartItems = [];
+  final Map<String, bool> itemChecked = {};
+  final Map<String, int> itemQuantity = {};
 
   @override
   void initState() {
     super.initState();
+    _cartItemsFuture = _fetchUserCartItems();
 
-    // ✅ Initialize the future to avoid LateInitializationError
-    _cartItemsFuture = fetchUserCartItems();
-
-    // Preload itemChecked and itemQuantity after fetching
     _cartItemsFuture.then((items) {
       setState(() {
-        cartItems = items;
-        for (var item in cartItems) {
-          itemChecked[item['id']] = false;
-          itemQuantity[item['id']] = item['quantity'] ?? 1;
+        cartItems.addAll(items);
+        for (final item in items) {
+          itemChecked[item['uiKey']] = false;
+          itemQuantity[item['uiKey']] = item['quantity'] ?? 1;
         }
       });
     });
   }
 
-  Future<List<Map<String, dynamic>>> fetchUserCartItems() async {
+  Future<List<Map<String, dynamic>>> _fetchUserCartItems() async {
     try {
-      final userEmail = FirebaseAuth.instance.currentUser?.email;
-      if (userEmail == null) {
-        print('No logged-in user found');
-        return [];
+      final email = FirebaseAuth.instance.currentUser?.email;
+      if (email == null) return [];
+
+      final qs =
+          await FirebaseFirestore.instance
+              .collection('cart')
+              .where('email', isEqualTo: email)
+              .limit(1)
+              .get();
+
+      if (qs.docs.isEmpty) return [];
+
+      final cartDoc = qs.docs.first;
+      final docId = cartDoc.id;
+      final raw = List<Map<String, dynamic>>.from(cartDoc['items'] ?? []);
+
+      final result = <Map<String, dynamic>>[];
+      for (var i = 0; i < raw.length; i++) {
+        final r = raw[i];
+        final id = (r['id'] ?? r['drugId'])?.toString();
+        if (id == null || id.isEmpty) continue;
+
+        final p = r['price'];
+        final price =
+            p is num
+                ? p.toDouble()
+                : num.tryParse(p.toString())?.toDouble() ?? 0.0;
+
+        result.add({
+          'uiKey': '$docId-$i',
+          'cartDocId': docId,
+          'id': id,
+          'price': price,
+          'type': r.containsKey('drugId') ? 'prescription' : 'uncontrolled',
+          ...r,
+        });
       }
-
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('cart')
-          .where('email', isEqualTo: userEmail)
-          .limit(1)
-          .get();
-
-      if (querySnapshot.docs.isEmpty) return [];
-
-      final doc = querySnapshot.docs.first;
-      final docId = doc.id;
-      final docData = doc.data();
-      final items = List<Map<String, dynamic>>.from(docData['items'] ?? []);
-
-      // Inject `cartId` and unique `id` per item using index
-      return List.generate(items.length, (index) {
-        final item = items[index];
-        return {
-          'uiKey': '$docId-$index', // unique id for UI logic
-          'cartDocId': docId,     // to update Firestore later
-          ...item,
-        };
-      });
+      return result;
     } catch (e) {
-      print('Error fetching cart items: $e');
+      debugPrint('Error fetching cart items: $e');
       return [];
     }
   }
 
-  void handleItemChanged(CartItemUpdate update) async {
-    try {
-      final String productType = update.type;
-      final String productName = update.name;
+  bool get _allSelected =>
+      cartItems.isNotEmpty &&
+      cartItems.every((item) => itemChecked[item['uiKey']] == true);
 
-      // Step 1: Check stock from uncontrolled_medicine
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('uncontrolled_medicine')
-          .doc('symptoms')
-          .collection(productType)
-          .where('name', isEqualTo: productName)
-          .limit(1)
-          .get();
+  bool get _noneSelected =>
+      cartItems.every((item) => itemChecked[item['uiKey']] != true);
 
-      int stock = 9999;
-      if (querySnapshot.docs.isNotEmpty) {
-        final docData = querySnapshot.docs.first.data();
-        final rawStock = docData['stock'];
-        if (rawStock is int) {
-          stock = rawStock;
-        } else if (rawStock is String) {
-          stock = int.tryParse(rawStock) ?? 9999;
-        }
+  bool? get _selectAllValue =>
+      _allSelected ? true : (_noneSelected ? false : null);
+
+  void _toggleSelectAll(bool? value) {
+    final bool newValue = (value ?? false);
+
+    setState(() {
+      for (final item in cartItems) {
+        itemChecked[item['uiKey']] = newValue;
       }
-
-      // Step 2: Reject if quantity exceeds stock
-      if (update.quantity > stock) {
-        await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Stock Limit Exceeded'),
-            content: Text('Cannot add more than $stock items of this product.'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
-            ],
-          ),
-        );
-        return;
-      }
-
-      // Step 3: Extract doc ID and item index from update.id
-      final parts = update.uiKey.split('-');
-      final cartDocId = parts[0];
-      final itemIndex = int.tryParse(parts[1] ?? '');
-
-      if (itemIndex == null) {
-        print('Invalid item index');
-        return;
-      }
-
-      final docRef = FirebaseFirestore.instance.collection('cart').doc(cartDocId);
-      final snapshot = await docRef.get();
-
-      if (!snapshot.exists) {
-        print('Cart document not found');
-        return;
-      }
-
-      // Step 4: Get the items array and modify
-      List<Map<String, dynamic>> items =
-      List<Map<String, dynamic>>.from(snapshot.data()?['items'] ?? []);
-
-      if (itemIndex < 0 || itemIndex >= items.length) {
-        print('Item index out of bounds');
-        return;
-      }
-
-      if (update.quantity == 0) {
-        // Step 5: Handle item removal
-        bool? confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Remove item?'),
-            content: const Text('Do you want to remove this product from the cart?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
-              TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Yes')),
-            ],
-          ),
-        );
-
-        if (confirmed == true) {
-          items.removeAt(itemIndex);
-          await docRef.update({'items': items});
-
-          setState(() {
-            itemChecked.remove(update.uiKey);
-            itemQuantity.remove(update.uiKey);
-            cartItems.removeWhere((item) => item['uiKey'] == update.uiKey);
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Item removed from cart')),
-          );
-        }
-      } else {
-        // Step 6: Update quantity
-        items[itemIndex]['quantity'] = update.quantity;
-        await docRef.update({'items': items});
-
-        setState(() {
-          itemChecked[update.uiKey] = update.isChecked;
-          itemQuantity[update.uiKey] = update.quantity;
-          final idx = cartItems.indexWhere((item) => item['uiKey'] == update.uiKey);
-          if (idx >= 0) cartItems[idx]['quantity'] = update.quantity;
-        });
-      }
-    } catch (e) {
-      print('Error updating cart: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error updating cart')),
-      );
-    }
+    });
   }
 
-
-  double calculateTotal(List<Map<String, dynamic>> items) {
+  double _cartTotal() {
     double total = 0.0;
-    for (var item in items) {
+    for (final item in cartItems) {
       final key = item['uiKey'];
-      final isChecked = itemChecked[key] ?? false;
+      final sel = itemChecked[key] ?? false;
       final qty = itemQuantity[key] ?? (item['quantity'] ?? 1);
-      if (isChecked) {
+      if (sel) {
         final price = double.tryParse(item['price'].toString()) ?? 0.0;
         total += price * qty;
       }
@@ -201,13 +113,115 @@ class _CartState extends State<Cart> {
     return total;
   }
 
+  Future<void> _handleItemChanged(CartItemUpdate u) async {
+    try {
+      /* 1. Stock check for uncontrolled medicine */
+      if (u.type == 'uncontrolled') {
+        final qs =
+            await FirebaseFirestore.instance
+                .collection('uncontrolled_medicine')
+                .doc('symptoms')
+                .collection(u.symptom)
+                .where('name', isEqualTo: u.name)
+                .limit(1)
+                .get();
+
+        final rawStock = qs.docs.isNotEmpty ? qs.docs.first['stock'] : 9999;
+        final stock =
+            rawStock is int
+                ? rawStock
+                : int.tryParse(rawStock.toString()) ?? 9999;
+
+        if (u.quantity > stock) {
+          await showDialog<void>(
+            context: context,
+            builder:
+                (_) => AlertDialog(
+                  title: const Text('Stock Limit Exceeded'),
+                  content: Text(
+                    'Cannot add more than $stock items of this product.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+          );
+          return;
+        }
+      }
+
+      final parts = u.uiKey.split('-');
+      final cartDocId = parts[0];
+      final idx = int.tryParse(parts[1] ?? '');
+      if (idx == null) return;
+
+      final docRef = FirebaseFirestore.instance
+          .collection('cart')
+          .doc(cartDocId);
+      final snap = await docRef.get();
+      if (!snap.exists) return;
+
+      final rows = List<Map<String, dynamic>>.from(snap['items'] ?? []);
+      if (idx < 0 || idx >= rows.length) return;
+
+      if (u.quantity == 0) {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder:
+              (_) => AlertDialog(
+                title: const Text('Remove item?'),
+                content: const Text(
+                  'Do you want to remove this product from the cart?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('No'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text('Yes'),
+                  ),
+                ],
+              ),
+        );
+        if (confirm != true) return;
+
+        rows.removeAt(idx);
+        await docRef.update({'items': rows});
+        setState(() {
+          cartItems.removeWhere((e) => e['uiKey'] == u.uiKey);
+          itemChecked.remove(u.uiKey);
+          itemQuantity.remove(u.uiKey);
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Item removed from cart')));
+        return;
+      }
+
+      rows[idx]['quantity'] = u.quantity;
+      await docRef.update({'items': rows});
+      setState(() {
+        itemChecked[u.uiKey] = u.isChecked;
+        itemQuantity[u.uiKey] = u.quantity;
+      });
+    } catch (e) {
+      debugPrint('Error updating cart: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Error updating cart')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE1D9D0),
-      bottomNavigationBar: // Total
-      Container(
-        width: double.infinity,
+      bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: const Color(0XFFF0ECE7),
@@ -215,45 +229,48 @@ class _CartState extends State<Cart> {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 15),
-            Text(
-              'Total: RM${calculateTotal(cartItems).toStringAsFixed(2)}',
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF6B4518),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                'Total: RM${_cartTotal().toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF6B4518),
+                ),
               ),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6B4518),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 20,
+                ),
+              ),
               onPressed: () {
-                final selectedItems = cartItems.where((item) {
-                  final id = item['uiKey'];
-                  return itemChecked[id] ?? false;
-
-                }).toList();
-
-                if (selectedItems.isEmpty) {
+                final selected =
+                    cartItems
+                        .where((e) => itemChecked[e['uiKey']] ?? false)
+                        .toList();
+                if (selected.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please select at least one item.')),
+                    const SnackBar(
+                      content: Text('Please select at least one item.'),
+                    ),
                   );
                   return;
                 }
-
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CheckoutPage(checkedItems: selectedItems),
+                    builder: (_) => CheckoutPage(checkedItems: selected),
                   ),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6B4518),
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-              ),
               child: const Text(
                 'Proceed to Checkout',
                 style: TextStyle(fontSize: 18, color: Colors.white),
@@ -263,18 +280,19 @@ class _CartState extends State<Cart> {
           ],
         ),
       ),
+
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.only(top: 35, left: 8, right: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Always visible
+              /* Header */
               Row(
                 children: [
                   IconButton(
-                    onPressed: () => Navigator.pushNamed(context, '/home'),
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    onPressed: () => Navigator.pushNamed(context, '/home'),
                   ),
                   const SizedBox(width: 40),
                   const Text(
@@ -289,46 +307,66 @@ class _CartState extends State<Cart> {
               ),
               const SizedBox(height: 25),
 
-              // Cart Items Section
+              /* Cart content */
               Expanded(
                 child: FutureBuilder<List<Map<String, dynamic>>>(
                   future: _cartItemsFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                  builder: (context, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
+                    if (snap.hasError) {
+                      return Center(child: Text('Error: ${snap.error}'));
                     }
 
-                    final items = snapshot.data ?? [];
-                    if (items.isEmpty) {
+                    if (cartItems.isEmpty) {
                       return const Center(child: Text('No items in cart.'));
                     }
 
-                    return ListView.builder(
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        final key = item['uiKey'] ?? 'unknown-$index';  // fallback to avoid null
-                        itemChecked.putIfAbsent(key, () => false);
-                        itemQuantity.putIfAbsent(key, () => item['quantity'] ?? 1);
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: CartItemWidget(
-                            item: item,
-                            isChecked: itemChecked[key]!,
-                            quantity: itemQuantity[key]!,
-                            onChanged: handleItemChanged,
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(
+                            8,
+                          ).copyWith(top: 0, left: 220),
+                          child: CheckboxListTile(
+                            title: const Text('Select All'),
+                            controlAffinity: ListTileControlAffinity.trailing,
+                            tristate: true,
+                            value: _selectAllValue,
+                            onChanged: _toggleSelectAll,
                           ),
-                        );
-                      },
+                        ),
+
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: cartItems.length,
+                            itemBuilder: (_, i) {
+                              final item = cartItems[i];
+                              final key = item['uiKey'];
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8.0,
+                                ),
+                                child: CartItemWidget(
+                                  item: item,
+                                  isChecked: itemChecked[key]!,
+                                  quantity: itemQuantity[key]!,
+                                  onChanged: (u) async {
+                                    await _handleItemChanged(u);
+                                    setState(() {});
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
               ),
-
-              const SizedBox(height: 10),
             ],
           ),
         ),
@@ -343,6 +381,32 @@ class CartItemWidget extends StatelessWidget {
   final int quantity;
   final ValueChanged<CartItemUpdate> onChanged;
 
+  Future<void> deleteCartItem(BuildContext context, String itemId) async {
+    try {
+      final email = FirebaseAuth.instance.currentUser?.email;
+      if (email == null) return;
+
+// First, get all cart items for this email
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('cart')
+          .where('email', isEqualTo: email)
+          .get();
+
+// Then delete each document one by one
+      for (final doc in querySnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Item removed from cart')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to remove item')),
+      );
+    }
+  }
+
   const CartItemWidget({
     super.key,
     required this.item,
@@ -353,16 +417,16 @@ class CartItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final itemId = item['cartItemId'] ?? item['id'] ?? item['drugId'] ?? '';
     return Container(
-      padding: const EdgeInsets.all(16.0),
-      margin: const EdgeInsets.symmetric(horizontal: 5.0),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
         color: const Color(0XFFF0ECE7),
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 2,
+            color: Colors.black12,
             blurRadius: 5,
             offset: const Offset(0, 3),
           ),
@@ -373,37 +437,96 @@ class CartItemWidget extends StatelessWidget {
         children: [
           Checkbox(
             value: isChecked,
-            onChanged: (bool? newValue) {
-              onChanged(CartItemUpdate(
-                uiKey: item['uiKey'],
-                productId: item['id'],
-                isChecked: newValue ?? false,
-                quantity: quantity,
-                type: item['symptom'] ?? '',
-                name: item['name'] ?? '',
-              ));
+            onChanged: (v) {
+              if (v == null) return;
+              onChanged(
+                CartItemUpdate(
+                  uiKey: item['uiKey'],
+                  productId: item['id'] ?? item['drugId'] ?? '',
+                  isChecked: v,
+                  quantity: quantity,
+                  type: item['type'] ?? '',
+                  symptom: item['symptom'] ?? '',
+                  name: item['name'] ?? '',
+                ),
+              );
             },
           ),
+
+          /* image */
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: item.containsKey('image') && item['image'] != null && item['image'].toString().isNotEmpty
-                ? Image.network(item['image'], width: 70, height: 70, fit: BoxFit.cover)
-                : Image.asset('asset/image/weblogo.png', width: 70, height: 70, fit: BoxFit.cover),
+            padding: const EdgeInsets.all(8),
+            child:
+                (item['image'] ?? '').toString().isNotEmpty
+                    ? Image.network(
+                      item['image'],
+                      width: 70,
+                      height: 70,
+                      fit: BoxFit.cover,
+                    )
+                    : Image.asset(
+                      'asset/image/weblogo.png',
+                      width: 70,
+                      height: 70,
+                      fit: BoxFit.cover,
+                    ),
           ),
           const SizedBox(width: 10),
+
+          /* details */
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item['name'] ?? 'Product Name',
-                  style: const TextStyle(color: Color(0xFF6B4518), fontSize: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item['name'] ?? 'Product',
+                        maxLines: 2,
+                        softWrap: true,
+                        style: const TextStyle(color: Color(0xFF6B4518), fontSize: 16),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        onChanged(
+                          CartItemUpdate(
+                            uiKey: item['uiKey'],
+                            productId: item['id'] ?? item['drugId'] ?? '',
+                            isChecked: isChecked,
+                            quantity: 0,
+                            type: item['type'] ?? '',
+                            symptom: item['symptom'] ?? '',
+                            name: item['name'] ?? '',
+                          ),
+                        );
+                      },
+                    ),
+
+                  ],
                 ),
+                if (item['type'] == 'prescription') ...[
+                  SizedBox(height: 15),
+                  Text(
+                    'Strength: ${item['strength'] ?? 'Unknown'}',
+                    style: const TextStyle(
+                      color: Color(0xFF6B4518),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 15),
                 Text(
                   'RM${item['price'] ?? 0}',
-                  style: const TextStyle(color: Color(0xFF6B4518), fontSize: 16),
+                  style: const TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontSize: 16,
+                  ),
                 ),
+
+                /* quantity */
                 Row(
                   children: [
                     const Text(
@@ -414,33 +537,56 @@ class CartItemWidget extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.remove),
-                      color: Colors.brown,
+                      icon: const Icon(Icons.remove, color: Colors.brown),
                       onPressed: () {
-                        onChanged(CartItemUpdate(
-                          uiKey: item['uiKey'],
-                          productId: item['id'],
-                          isChecked: isChecked,
-                          quantity: quantity - 1,
-                          type: item['symptom'] ?? '',
-                          name: item['name'] ?? '',
-                        ));
-
+                        if (item['type'] == 'prescription') {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Prescription item quantity cannot be changed.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        onChanged(
+                          CartItemUpdate(
+                            uiKey: item['uiKey'],
+                            productId: item['id'] ?? item['drugId'] ?? '',
+                            isChecked: isChecked,
+                            quantity: quantity - 1,
+                            type: item['type'] ?? '',
+                            symptom: item['symptom'] ?? '',
+                            name: item['name'] ?? '',
+                          ),
+                        );
                       },
                     ),
                     Text('$quantity'),
                     IconButton(
-                      icon: const Icon(Icons.add),
-                      color: Colors.brown,
+                      icon: const Icon(Icons.add, color: Colors.brown),
                       onPressed: () {
-                        onChanged(CartItemUpdate(
-                          uiKey: item['uiKey'],
-                          productId: item['id'],
-                          isChecked: isChecked,
-                          quantity: quantity + 1,
-                          type: item['symptom'] ?? '',
-                          name: item['name'] ?? '',
-                        ));
+                        if (item['type'] == 'prescription') {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Prescription item quantity cannot be changed.',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                        onChanged(
+                          CartItemUpdate(
+                            uiKey: item['uiKey'],
+                            productId: item['id'] ?? item['drugId'] ?? '',
+                            isChecked: isChecked,
+                            quantity: quantity + 1,
+                            type: item['type'] ?? '',
+                            symptom: item['symptom'] ?? '',
+                            name: item['name'] ?? '',
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -453,6 +599,7 @@ class CartItemWidget extends StatelessWidget {
     );
   }
 }
+
 class CartItemUpdate {
   final String uiKey;
   final String productId;
@@ -460,6 +607,7 @@ class CartItemUpdate {
   final int quantity;
   final String type;
   final String name;
+  final String symptom;
 
   CartItemUpdate({
     required this.uiKey,
@@ -468,6 +616,6 @@ class CartItemUpdate {
     required this.quantity,
     required this.type,
     required this.name,
+    required this.symptom,
   });
 }
-

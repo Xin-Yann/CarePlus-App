@@ -31,6 +31,7 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    fetchPharmacyData();
   }
 
   @override
@@ -42,13 +43,76 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
     super.dispose();
   }
 
+  Map<String, dynamic>? pharmacyData;
+  String? _pharmacyState;
+  String? _pharmacyId;
+  Map<String, List<String>> stateDocIds = {
+    "Perlis": ["P1", "P2", "P3"],
+    "Kedah": ["P4", "P5", "P6"],
+    "Penang": ["P7", "P8", "P9"],
+    "Perak": ["P10", "P11", "P12"],
+    "Selangor": ["P13", "P14", "P15"],
+    "Negeri Sembilan": ["P16", "P17", "P18"],
+    "Melaka": ["P19", "P20", "P21"],
+    "Kelantan": ["P22", "P23", "P24"],
+    "Terengganu": ["P25", "P26", "P27"],
+    "Pahang": ["P28", "P29", "P30"],
+    "Johor": ["P31", "P32", "P33"],
+    "Sabah": ["P34", "P35", "P36"],
+    "Sarawak": ["P37", "P38", "P39"],
+  };
+
+  Future<void> fetchPharmacyData() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null || user.email == null) {
+      print('User is not logged in or missing email.');
+      return;
+    }
+
+    final Useremail = user.email!;
+
+
+    for (final entry in stateDocIds.entries) {
+      final state = entry.key;
+      for (final id in entry.value) {
+        final doc = await FirebaseFirestore.instance
+            .collection('pharmacy')
+            .doc('state')
+            .collection(state)
+            .doc(id)
+            .get();
+
+        if (doc.exists) {
+          final data = doc.data() as Map<String, dynamic>?;
+
+          if (data != null && data.containsKey('email')) {
+            print('Checking ${state} / ${id} -> Email: ${data['email']}');
+            if (data['email'] == Useremail) {
+              setState(() {
+                _pharmacyState = state;
+                _pharmacyId = id;
+              });
+              print('Match found in ${state} / ${id}');
+              return;
+            }
+          }
+        }
+
+      }
+    }
+
+    print('Pharmacy record not found.');
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE1D9D0),
       bottomNavigationBar: const PharmacyFooter(),
       body: Padding(
-        padding: const EdgeInsets.all(8.0).copyWith(top: 70),
+        padding: const EdgeInsets.all(8.0).copyWith(top: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -129,9 +193,14 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
   }
 
   Widget _buildCreditCardTab() {
+    if (_pharmacyId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('orders')
-        .where('paymentType', isEqualTo: 'Debit/Credit Card');
+        .where('paymentType', isEqualTo: 'Debit/Credit Card')
+        .where('assignedPharmacyId', isEqualTo: _pharmacyId);
 
     if (selectedStatus != 'All') {
       query = query.where('orderStatus', isEqualTo: selectedStatus);
@@ -142,17 +211,25 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
     return StreamBuilder<QuerySnapshot>(
       stream: query.snapshots(),
       builder: (context, snap) {
+        if (snap.hasError) {
+          print('Stream error: ${snap.error}');
+
+          return Center(child: Text('🔥 ${snap.error}'));
+        }
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (!snap.hasData || snap.data!.docs.isEmpty) {
-          return const Center(child: Text('No credit-card orders yet.'));
+        if (!snap.hasData) {
+          return const Center(child: Text('Loading orders…'));
+        }
+
+        final docs = snap.data!.docs;
+        if (docs.isEmpty) {
+          return const Center(child: Text('No TNG e‑wallet orders yet.'));
         }
 
         final orders =
-            snap.data!.docs
-                .map((d) => d.data() as Map<String, dynamic>)
-                .toList();
+        docs.map((d) => d.data() as Map<String, dynamic>).toList();
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -168,29 +245,43 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
   }
 
   Widget _buildEWalletTab() {
+    if (_pharmacyId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('orders')
-        .where('paymentType', isEqualTo: 'TNG');
+        .where('paymentType', isEqualTo: 'TNG')
+        .where('assignedPharmacyId', isEqualTo: _pharmacyId);
 
     if (selectedStatus != 'All') {
       query = query.where('orderStatus', isEqualTo: selectedStatus);
     }
+
     query = query.orderBy('timestamp', descending: true);
 
     return StreamBuilder<QuerySnapshot>(
       stream: query.snapshots(),
       builder: (context, snap) {
+        if (snap.hasError) {
+          print('Stream error: ${snap.error}');
+
+          return Center(child: Text('🔥 ${snap.error}'));
+        }
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (!snap.hasData || snap.data!.docs.isEmpty) {
-          return const Center(child: Text('No TNG e-wallet orders yet.'));
+        if (!snap.hasData) {
+          return const Center(child: Text('Loading orders…'));
+        }
+
+        final docs = snap.data!.docs;
+        if (docs.isEmpty) {
+          return const Center(child: Text('No TNG e‑wallet orders yet.'));
         }
 
         final orders =
-            snap.data!.docs
-                .map((d) => d.data() as Map<String, dynamic>)
-                .toList();
+        docs.map((d) => d.data() as Map<String, dynamic>).toList();
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -203,9 +294,12 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
         );
       },
     );
+
   }
 
-  // String _formatTimestamp(dynamic ts) {
+
+
+// String _formatTimestamp(dynamic ts) {
   //   if (ts is Timestamp) {
   //     final dt = ts.toDate();
   //     return '${dt.day}/${dt.month}/${dt.year}';
@@ -348,7 +442,7 @@ class OrderCard extends StatelessWidget {
                         'Address: ${data['address']}',
                         style: const TextStyle(fontSize: 14),
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 8),
                       Text(
                         'Placed At: ${_formatTimestamp(data['timestamp'])}',
                         style: const TextStyle(fontSize: 14),
@@ -382,8 +476,8 @@ class OrderCard extends StatelessWidget {
                         SizedBox(height: 10),
                         Text(
                           'Estimated Delivery: ${_formatTimestamp(data['deliveryDate'])}',
-                          style: const TextStyle(fontSize: 12),
                         ),
+                        SizedBox(height: 10),
                       ],
                       if (data['orderStatus'] == 'Delivered')
                         Text(
@@ -409,15 +503,19 @@ class OrderCard extends StatelessWidget {
                               child: Row(
                                 children: [
                                   Image.network(
-                                    itemMap['image'] ?? '',
+                                    item['image'] ?? '',
                                     width: 60,
                                     height: 60,
                                     fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (_, __, ___) => const Icon(
-                                          Icons.image_not_supported,
-                                          size: 40,
-                                        ),
+                                    errorBuilder: (context, error, stackTrace) {
+                                      // Fallback to asset image
+                                      return Image.asset(
+                                        'asset/image/weblogo.png',
+                                        width: 60,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
@@ -426,9 +524,11 @@ class OrderCard extends StatelessWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
+                                          maxLines: 2,
+                                          softWrap: true,
                                           itemMap['name'] ?? 'Item',
-                                          overflow: TextOverflow.ellipsis,
                                         ),
+
                                         const SizedBox(height: 5),
                                         Text(
                                           'Quantity: x${itemMap['quantity'] ?? 1}',
@@ -437,10 +537,13 @@ class OrderCard extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  Text(
-                                    'RM ${_formatTotal(itemMap['price'])}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'RM ${_formatTotal(itemMap['price'])}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                 ],

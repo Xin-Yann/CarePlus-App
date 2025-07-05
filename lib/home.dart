@@ -164,7 +164,7 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0).copyWith(top: 32.0, left: 120.0),
+                  padding: const EdgeInsets.all(8.0).copyWith(top: 32.0, left: 100.0),
                   child: GestureDetector(
                     onTap: () {
                       Navigator.pushNamed(context, '/pharmacy_list');
@@ -184,7 +184,7 @@ class _HomeState extends State<Home> {
                 ),
               ],
             ),
-            
+
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
