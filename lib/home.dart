@@ -26,7 +26,6 @@ class _HomeState extends State<Home> {
 
   Future<void> _signOutUser() async {
     await FirebaseAuth.instance.signOut();
-    // Optional: Navigate to login page
     Navigator.pushReplacementNamed(context, '/');
   }
 
@@ -34,15 +33,12 @@ class _HomeState extends State<Home> {
     Map<String, List<Map<String, dynamic>>> tempData = {};
 
     for (String state in states) {
-      final querySnapshot =
-          await _firestore
-              .collection('pharmacy')
-              .doc('state')
-              .collection(state)
-              .limit(3)
-              .get();
-
-      print('Fetched ${querySnapshot.docs.length} documents for $state');
+      final querySnapshot = await _firestore
+          .collection('pharmacy')
+          .doc('state')
+          .collection(state)
+          .limit(3)
+          .get();
 
       tempData[state] = querySnapshot.docs.map((doc) => doc.data()).toList();
     }
@@ -54,7 +50,8 @@ class _HomeState extends State<Home> {
 
   Future<void> fetchDoctorData() async {
     try {
-      final querySnapshot = await _firestore.collection('doctors').limit(3).get();
+      final querySnapshot =
+      await _firestore.collection('doctors').limit(3).get();
 
       setState(() {
         doctorData = querySnapshot.docs.map((doc) => doc.data()).toList();
@@ -74,13 +71,13 @@ class _HomeState extends State<Home> {
             Row(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(
-                    8.0,
-                  ).copyWith(top: 35.0, left: 20.0),
+                  padding: const EdgeInsets.all(8.0).copyWith(top: 35.0, left: 20.0),
                   child: GestureDetector(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => OrderHistory()));
-                      setState(() {});
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => OrderHistory()));
                     },
                     child: Image.asset(
                       'asset/image/weblogo.png',
@@ -91,51 +88,38 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(
-                    8.0,
-                  ).copyWith(top: 35.0, left: 200.0),
-                  child: Builder(
-                    builder:
-                        (context) => GestureDetector(
-                          onTap: () {
-                            print("Tapped");
-                            Navigator.pushReplacementNamed(context, '/cart');
-                          },
-                          child: Image.asset(
-                            'asset/image/cart.png',
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                  padding: const EdgeInsets.all(8.0).copyWith(top: 35.0, left: 200.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacementNamed(context, '/cart');
+                    },
+                    child: Image.asset(
+                      'asset/image/cart.png',
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-
                 Padding(
-                  padding: const EdgeInsets.all(
-                    8.0,
-                  ).copyWith(top: 35.0, left: 15.0),
-                  child: Builder(
-                    builder:
-                        (context) => GestureDetector(
-                          onTap: () async {
-                            await FirebaseAuth.instance.signOut();
-                            Navigator.pushReplacementNamed(context, '/');
-                            print("User signed out");
-                          },
-                          child: Image.asset(
-                            'asset/image/exit.png',
-                            width: 33,
-                            height: 33,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                  padding: const EdgeInsets.all(8.0).copyWith(top: 35.0, left: 15.0),
+                  child: GestureDetector(
+                    onTap: () async {
+                      await FirebaseAuth.instance.signOut();
+                      Navigator.pushReplacementNamed(context, '/');
+                    },
+                    child: Image.asset(
+                      'asset/image/exit.png',
+                      width: 33,
+                      height: 33,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 20.0),
-            Text(
+            const SizedBox(height: 20.0),
+            const Text(
               'Yours Health, Yours Way!',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -145,17 +129,15 @@ class _HomeState extends State<Home> {
               ),
             ),
 
-            SizedBox(height: 10.0),
+            const SizedBox(height: 10.0),
 
+            // ------------------------ Pharmacy List ------------------------
             Row(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(
-                    8.0,
-                  ).copyWith(top: 25.0, left: 20.0),
-                  child: Text(
+                  padding: const EdgeInsets.all(8.0).copyWith(top: 25.0, left: 20.0),
+                  child: const Text(
                     'Pharmacy List',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Crimson',
@@ -169,11 +151,10 @@ class _HomeState extends State<Home> {
                     onTap: () {
                       Navigator.pushNamed(context, '/pharmacy_list');
                     },
-                    child: Text(
+                    child: const Text(
                       'view more',
-                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: const Color(0XFF797979),
+                        color: Color(0XFF797979),
                         fontWeight: FontWeight.bold,
                         fontFamily: 'Crimson',
                         fontSize: 20,
@@ -186,100 +167,80 @@ class _HomeState extends State<Home> {
             ),
 
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ).copyWith(top: 10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0).copyWith(top: 10.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children:
-                    pharmacyData.entries.map((entry) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Height for horizontal scroll area
-                          Column(
-                            children:
-                                entry.value.map((data) {
-                                  return Container(
-                                    padding: const EdgeInsets.all(16.0),
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 8.0,
-                                    ).copyWith(top: 10.0),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0XFFF0ECE7),
-                                      borderRadius: BorderRadius.circular(12.0),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.3),
-                                          spreadRadius: 2,
-                                          blurRadius: 5,
-                                          offset: Offset(0, 3),
-                                        ),
-                                      ],
+                children: pharmacyData.entries.map((entry) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: entry.value.map((data) {
+                      return Container(
+                        padding: const EdgeInsets.all(16.0),
+                        margin: const EdgeInsets.symmetric(horizontal: 8.0).copyWith(top: 10.0),
+                        decoration: BoxDecoration(
+                          color: const Color(0XFFF0ECE7),
+                          borderRadius: BorderRadius.circular(12.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.3),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                data['imageUrl'] ?? '',
+                                height: 100,
+                                width: 100,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.broken_image, size: 60),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    data['name'] ?? 'Unnamed Pharmacy',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        if (data['image'] != null)
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            child: Image.network(
-                                              data['image'],
-                                              height: 100,
-                                              width: 100,
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                        SizedBox(
-                                          width: 12,
-                                        ), // spacing between image and text
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                data['name'] ??
-                                                    'Unnamed Pharmacy',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              SizedBox(height: 4),
-                                              Text(
-                                                data['address'] ??
-                                                    'No address available',
-                                                style: TextStyle(
-                                                  color: Colors.grey[700],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    data['address'] ?? 'No address available',
+                                    style: TextStyle(
+                                      color: Colors.grey[700],
                                     ),
-                                  );
-                                }).toList(),
-                          ),
-                        ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     }).toList(),
+                  );
+                }).toList(),
               ),
             ),
+
+            // ------------------------ Doctor List ------------------------
             Row(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(
-                    8.0,
-                  ).copyWith(top: 25.0, left: 20.0),
-                  child: Text(
+                  padding: const EdgeInsets.all(8.0).copyWith(top: 25.0, left: 20.0),
+                  child: const Text(
                     'Doctor List',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Crimson',
@@ -293,11 +254,10 @@ class _HomeState extends State<Home> {
                     onTap: () {
                       Navigator.pushNamed(context, '/specialist_doctor_list');
                     },
-                    child: Text(
+                    child: const Text(
                       'view more',
-                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: const Color(0XFF797979),
+                        color: Color(0XFF797979),
                         fontWeight: FontWeight.bold,
                         fontFamily: 'Crimson',
                         fontSize: 20,
@@ -308,74 +268,68 @@ class _HomeState extends State<Home> {
                 ),
               ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Column(
-                children:
-                    doctorData.map((doctor) {
-                      return Container(
-                        padding: const EdgeInsets.all(16.0),
-                        margin: const EdgeInsets.symmetric(horizontal: 8.0).copyWith(top: 15.0),
-                        decoration: BoxDecoration(
-                          color: const Color(0XFFF0ECE7),
-                          borderRadius: BorderRadius.circular(12.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.3),
-                              spreadRadius: 2,
-                              blurRadius: 5,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(
-                                8,
-                              ),
-                              child: Image(
-                                image: doctor['imageUrl'] != null
-                                    ? NetworkImage(doctor['imageUrl'])
-                                    : const AssetImage('assets/default_avatar.png') as ImageProvider,
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                                alignment: Alignment.topCenter, // useful to center faces
-                              ),
-                            ),
 
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    doctor['name'] ?? 'Unnamed Doctor',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    doctor['specialty'] ??
-                                        'Specialty not available',
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                children: doctorData.map((doctor) {
+                  return Container(
+                    padding: const EdgeInsets.all(16.0),
+                    margin: const EdgeInsets.symmetric(horizontal: 8.0).copyWith(top: 15.0),
+                    decoration: BoxDecoration(
+                      color: const Color(0XFFF0ECE7),
+                      borderRadius: BorderRadius.circular(12.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.3),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
                         ),
-                      );
-                    }).toList(),
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image(
+                            image: doctor['imageUrl'] != null
+                                ? NetworkImage(doctor['imageUrl'])
+                                : const AssetImage('assets/default_avatar.png') as ImageProvider,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                doctor['name'] ?? 'Unnamed Doctor',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                doctor['specialty'] ?? 'Specialty not available',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
             ),
-            SizedBox(height: 20.0,),
+
+            const SizedBox(height: 20.0),
           ],
         ),
       ),

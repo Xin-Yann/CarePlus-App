@@ -186,19 +186,10 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
       };
 
       // Extract the last word of the address
-      String addressText = address.text.trim();
-      List<String> words =
-          addressText
-              .replaceAll(RegExp(r'[^\w\s]'), '') // Remove commas/punctuation
-              .split(' ')
-              .where((w) => w.isNotEmpty)
-              .toList();
-      String lastWord = words.isNotEmpty ? words.last : '';
-
-      // Match last word to known states
+      String addressText = address.text.trim().toLowerCase();
       String? matchedState;
       for (String state in stateDocIds.keys) {
-        if (lastWord.toLowerCase() == state.toLowerCase()) {
+        if (addressText.contains(state.toLowerCase())) {
           matchedState = state;
           break;
         }
@@ -207,7 +198,7 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
       if (matchedState == null) {
         setState(() {
           errorText =
-              "Could not detect a valid Malaysian state from the end of the address.";
+          "Could not detect a valid Malaysian state in the address.";
         });
         return;
       }
