@@ -221,14 +221,22 @@ class _DoctorChatMessageState extends State<DoctorChatMessage> {
                           ),
                         Align(
                           alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isMe ? Colors.grey[300] : Colors.brown[200],
-                              borderRadius: BorderRadius.circular(10),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.8,
                             ),
-                            child: Text(msg['text'] ?? ''),
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: isMe ? Colors.grey[300] : Colors.brown[200],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                msg['text'] ?? '',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
                           ),
                         ),
                       ],

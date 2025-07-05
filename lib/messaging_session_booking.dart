@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'chat_with_doctor.dart';
 
 class MessagingSessionBooking extends StatefulWidget {
   final String doctorId;
@@ -103,13 +104,15 @@ class _MessagingSessionBookingState extends State<MessagingSessionBooking> {
       await _firestore.collection('session').doc(bookingId).set(sessionData);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking successful!')),
+        const SnackBar(content: Text('Booking successful! Redirecting to chat...')),
       );
 
-      setState(() {
-        _bookedSlots[_selectedTimeSlot!] = true;
-        _selectedTimeSlot = null;
-      });
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatWithDoctor(),
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Booking failed: $e')),

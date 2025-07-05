@@ -1,6 +1,7 @@
 import 'package:careplusapp/Pharmacy/pharmacy_history.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_home.dart';
 import 'package:careplusapp/Pharmacy/pharmacy_profile.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_manage_product.dart';
 import 'package:flutter/material.dart';
 
 class PharmacyFooter extends StatelessWidget {
@@ -28,6 +29,19 @@ class PharmacyFooter extends StatelessWidget {
                     );
                   },
                   //route: '/pharmacy_home',
+                  width: 30,
+                  height: 30,
+                ),
+                _PharmacyFooterItem(
+                  imagePath: 'asset/image/drug.png',
+                  label: 'Product',
+                  //route: '/product_category',
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => PharmacyManageProduct()),
+                    );
+                  },
                   width: 30,
                   height: 30,
                 ),

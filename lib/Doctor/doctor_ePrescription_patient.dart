@@ -64,6 +64,21 @@ class _DoctorePrescriptionPatientState
       };
     }).toList());
 
+    // ✅ SORT by date (latest first) then time (latest first)
+    sessionList.sort((a, b) {
+      final dateA = a['date'] ?? '';
+      final dateB = b['date'] ?? '';
+      final timeA = a['time'] ?? '';
+      final timeB = b['time'] ?? '';
+
+      // First compare by date descending
+      final dateCompare = dateB.compareTo(dateA);
+      if (dateCompare != 0) return dateCompare;
+
+      // If same date, compare time descending
+      return timeB.compareTo(timeA);
+    });
+
     setState(() {
       sessions = sessionList;
     });
@@ -108,7 +123,8 @@ class _DoctorePrescriptionPatientState
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 20),
+            padding:
+            const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 20),
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -140,7 +156,8 @@ class _DoctorePrescriptionPatientState
               itemBuilder: (context, index) {
                 final session = sessions[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -148,7 +165,8 @@ class _DoctorePrescriptionPatientState
                   child: ListTile(
                     title: Text(
                       session['userName'],
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style:
+                      const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
