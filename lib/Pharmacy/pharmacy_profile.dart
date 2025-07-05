@@ -1,13 +1,17 @@
 import 'dart:io';
 import 'package:careplusapp/Pharmacy/pharmacy_footer.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:html' as html;
+import 'dart:io';
+import 'dart:io' as io;
 
 class PharmacyProfile extends StatefulWidget {
   const PharmacyProfile({Key? key}) : super(key: key);
@@ -238,30 +242,76 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
   }
 
   Future<void> _pickAndUploadImage() async {
-    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedImage == null) return;
+    const imgbbApiKey = 'e6f550d58c3ce65d422f1483a8b92ef7';
 
-    setState(() {
-      _profileImage = File(pickedImage.path);
-    });
+    if (kIsWeb) {
+      final uploadInput = html.FileUploadInputElement()..accept = 'image/*';
+      uploadInput.click();
 
-    final bytes = await _profileImage!.readAsBytes();
-    final base64Image = base64Encode(bytes);
+      uploadInput.onChange.listen((event) {
+        final file = uploadInput.files?.first;
+        if (file == null) return;
 
-    final response = await http.post(
-      Uri.parse('https://api.imgur.com/3/image'),
-      headers: {'Authorization': 'Client-ID f10c4d5c7204b1b'},
-      body: {'image': base64Image, 'type': 'base64'},
-    );
+        final reader = html.FileReader();
+        reader.readAsArrayBuffer(file);
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      setState(() {
-        _imageUrl = data['data']['link'];
+        reader.onLoadEnd.listen((event) async {
+          final bytes = reader.result as Uint8List; // ✅ fix
+          final base64Image = base64Encode(bytes);
+
+          final response = await http.post(
+            Uri.parse('https://api.imgbb.com/1/upload?key=$imgbbApiKey'),
+            body: {'image': base64Image},
+          );
+
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            final newImageUrl = data['data']['url'];
+            setState(() {
+              _imageUrl = newImageUrl;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Image uploaded successfully')),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Image upload failed')),
+            );
+          }
+        });
       });
-      print('Uploaded: $_imageUrl');
     } else {
-      print('Upload failed: ${response.body}');
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      if (picked == null) return;
+
+      final imageTemp = io.File(picked.path);
+      setState(() {
+        _profileImage = imageTemp;
+      });
+
+      final bytes = await picked.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      final response = await http.post(
+        Uri.parse('https://api.imgbb.com/1/upload?key=$imgbbApiKey'),
+        body: {'image': base64Image},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final newImageUrl = data['data']['url'];
+        setState(() {
+          _imageUrl = newImageUrl;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image uploaded successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Image upload failed')));
+      }
     }
   }
 
@@ -353,7 +403,6 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
         print("Reauthentication required.");
-        // TODO: Trigger reauthentication UI
       } else {
         print("Firebase Auth error: ${e.message}");
       }
@@ -368,7 +417,7 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
       backgroundColor: const Color(0xFFE1D9D0),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(8.0).copyWith(top: 60.0),
+          padding: const EdgeInsets.all(8.0).copyWith(top: 40.0),
           child: Column(
             children: [
               Row(
@@ -439,7 +488,7 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
                     SizedBox(height: 30.0,),
 
                     Center(
-                      child: _profileImage != null
+                      child:_profileImage != null
                           ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.file(
@@ -459,12 +508,19 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
                           height: 100,
                           fit: BoxFit.cover,
                           alignment: Alignment.topCenter,
-                          loadingBuilder: (context, child, loadingProgress) {
+                          loadingBuilder: (
+                              context,
+                              child,
+                              loadingProgress,
+                              ) {
                             if (loadingProgress == null) return child;
                             return const CircularProgressIndicator();
                           },
                           errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.broken_image, size: 50);
+                            return const Icon(
+                              Icons.broken_image,
+                              size: 50,
+                            );
                           },
                         ),
                       )

@@ -1,9 +1,12 @@
+import 'dart:html' as html;
 import 'dart:io';
+import 'dart:io' as io;
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'doctor_footer.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -54,7 +57,6 @@ class _DoctorProfileState extends State<DoctorProfile> {
     fetchDoctorData();
     print('Selected specialty: $selectedSpecialization');
     print('Specializations list: $specializations');
-
   }
 
   Future<void> fetchDoctorData() async {
@@ -153,30 +155,76 @@ class _DoctorProfileState extends State<DoctorProfile> {
   }
 
   Future<void> _pickAndUploadImage() async {
-    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedImage == null) return;
+    const imgbbApiKey = 'e6f550d58c3ce65d422f1483a8b92ef7';
 
-    setState(() {
-      _profileImage = File(pickedImage.path);
-    });
+    if (kIsWeb) {
+      final uploadInput = html.FileUploadInputElement()..accept = 'image/*';
+      uploadInput.click();
 
-    final bytes = await _profileImage!.readAsBytes();
-    final base64Image = base64Encode(bytes);
+      uploadInput.onChange.listen((event) {
+        final file = uploadInput.files?.first;
+        if (file == null) return;
 
-    final response = await http.post(
-      Uri.parse('https://api.imgur.com/3/image'),
-      headers: {'Authorization': 'Client-ID f10c4d5c7204b1b'},
-      body: {'image': base64Image, 'type': 'base64'},
-    );
+        final reader = html.FileReader();
+        reader.readAsArrayBuffer(file);
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      setState(() {
-        _imageUrl = data['data']['link'];
+        reader.onLoadEnd.listen((event) async {
+          final bytes = reader.result as Uint8List; // ✅ fix
+          final base64Image = base64Encode(bytes);
+
+          final response = await http.post(
+            Uri.parse('https://api.imgbb.com/1/upload?key=$imgbbApiKey'),
+            body: {'image': base64Image},
+          );
+
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            final newImageUrl = data['data']['url'];
+            setState(() {
+              _imageUrl = newImageUrl;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Image uploaded successfully')),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Image upload failed')),
+            );
+          }
+        });
       });
-      print('Uploaded: $_imageUrl');
     } else {
-      print('Upload failed: ${response.body}');
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      if (picked == null) return;
+
+      final imageTemp = io.File(picked.path);
+      setState(() {
+        _profileImage = imageTemp;
+      });
+
+      final bytes = await picked.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      final response = await http.post(
+        Uri.parse('https://api.imgbb.com/1/upload?key=$imgbbApiKey'),
+        body: {'image': base64Image},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final newImageUrl = data['data']['url'];
+        setState(() {
+          _imageUrl = newImageUrl;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image uploaded successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Image upload failed')));
+      }
     }
   }
 
@@ -188,30 +236,39 @@ class _DoctorProfileState extends State<DoctorProfile> {
         final email = user.email;
 
         // Query doctor by email to find the correct doc ID (e.g., 'D1', 'D2', etc.)
-        final querySnapshot = await FirebaseFirestore.instance
-            .collection('doctors')
-            .where('email', isEqualTo: email)
-            .limit(1)
-            .get();
+        final querySnapshot =
+            await FirebaseFirestore.instance
+                .collection('doctors')
+                .where('email', isEqualTo: email)
+                .limit(1)
+                .get();
 
         if (querySnapshot.docs.isNotEmpty) {
           final docId = querySnapshot.docs.first.id;
 
           // Delete doctor document
-          await FirebaseFirestore.instance.collection('doctors').doc(docId).delete();
+          await FirebaseFirestore.instance
+              .collection('doctors')
+              .doc(docId)
+              .delete();
 
           // Delete the user's auth account
           await user.delete();
 
           print("Doctor account deleted successfully.");
           Navigator.pushReplacementNamed(context, '/');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Your doctor account has been deleted.')),
+          );
         } else {
           print("Doctor document not found.");
         }
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
-        print("The doctor must reauthenticate before this operation can be executed.");
+        print(
+          "The doctor must reauthenticate before this operation can be executed.",
+        );
         // You can show a dialog to prompt re-authentication here
       } else {
         print("Error deleting doctor account: ${e.message}");
@@ -226,7 +283,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
       backgroundColor: const Color(0xFFE1D9D0),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(8.0).copyWith(top: 60.0),
+          padding: const EdgeInsets.all(8.0).copyWith(top: 40.0),
           child: Column(
             children: [
               Row(
@@ -293,7 +350,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                       ),
                     ),
 
-                    SizedBox(height: 30.0,),
+                    SizedBox(height: 30.0),
 
                     Center(
                       child:
@@ -375,12 +432,19 @@ class _DoctorProfileState extends State<DoctorProfile> {
                         width: 382,
                         child: Container(
                           decoration: BoxDecoration(
-                            color:isEditing ? Colors.white: const Color(0xFFCCCCCC),
+                            color:
+                                isEditing
+                                    ? Colors.white
+                                    : const Color(0xFFCCCCCC),
                             borderRadius: BorderRadius.circular(30),
                           ),
                           child: DropdownButtonFormField<String>(
-                            isExpanded: true,  // Make dropdown take full width and align left
-                            value: selectedSpecialization?.isNotEmpty == true ? selectedSpecialization : null,
+                            isExpanded:
+                                true, // Make dropdown take full width and align left
+                            value:
+                                selectedSpecialization?.isNotEmpty == true
+                                    ? selectedSpecialization
+                                    : null,
                             decoration: InputDecoration(
                               // enabledBorder: OutlineInputBorder(
                               //   borderRadius: BorderRadius.circular(30),
@@ -400,22 +464,26 @@ class _DoctorProfileState extends State<DoctorProfile> {
                               filled: true,
                               fillColor: Colors.transparent,
                             ),
-                            onChanged: isEditing
-                                ? (String? newValue) {
-                              setState(() {
-                                selectedSpecialization = newValue!;
-                              });
-                            }
-                                : null,
-                            items: specializations.map((String specialization) {
-                              return DropdownMenuItem<String>(
-                                value: specialization,
-                                child: Align(
-                                  alignment: Alignment.centerLeft,  // Align text left
-                                  child: Text(specialization),
-                                ),
-                              );
-                            }).toList(),
+                            onChanged:
+                                isEditing
+                                    ? (String? newValue) {
+                                      setState(() {
+                                        selectedSpecialization = newValue!;
+                                      });
+                                    }
+                                    : null,
+                            items:
+                                specializations.map((String specialization) {
+                                  return DropdownMenuItem<String>(
+                                    value: specialization,
+                                    child: Align(
+                                      alignment:
+                                          Alignment
+                                              .centerLeft, // Align text left
+                                      child: Text(specialization),
+                                    ),
+                                  );
+                                }).toList(),
                           ),
                         ),
                       ),

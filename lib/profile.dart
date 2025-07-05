@@ -20,13 +20,11 @@ class _ProfileState extends State<Profile> {
   final TextEditingController address = TextEditingController();
   bool isEditing = false;
 
-
   @override
   void initState() {
     super.initState();
     fetchUserData();
   }
-
 
   Future<void> fetchUserData() async {
 
@@ -81,6 +79,9 @@ class _ProfileState extends State<Profile> {
 
           print("User account deleted successfully.");
           Navigator.pushReplacementNamed(context, '/');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Your account has been deleted.')),
+          );
         } else {
           print("User document with custom ID not found.");
         }
@@ -101,7 +102,7 @@ class _ProfileState extends State<Profile> {
       backgroundColor: const Color(0xFFE1D9D0),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(8.0).copyWith(top: 60.0),
+          padding: const EdgeInsets.all(8.0).copyWith(top: 40.0),
           child: Column(
             children: [
               Row(
@@ -130,6 +131,7 @@ class _ProfileState extends State<Profile> {
                   ),
                 ],
               ),
+              SizedBox(height: 10,),
               Container(
                 padding: const EdgeInsets.all(16.0),
                 margin: const EdgeInsets.symmetric(

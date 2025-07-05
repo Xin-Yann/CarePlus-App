@@ -45,7 +45,7 @@ class _OrderHistoryPageState extends State<OrderHistory>
       backgroundColor: const Color(0xFFE1D9D0),
       bottomNavigationBar: const Footer(),
       body: Padding(
-        padding: const EdgeInsets.all(8.0).copyWith(top: 70),
+        padding: const EdgeInsets.all(8.0).copyWith(top: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -366,30 +366,47 @@ class OrderCard extends StatelessWidget {
                               padding: const EdgeInsets.only(top: 6, bottom: 8),
                               child: Row(
                                 children: [
-                                  // ── product image ──
+                                  //product image
                                   Image.network(
-                                    itemMap['image'] ?? '',
+                                    item['image'] ?? '',
                                     width: 60,
                                     height: 60,
                                     fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (_, __, ___) => const Icon(
-                                          Icons.image_not_supported,
-                                          size: 40,
-                                        ),
+                                    errorBuilder: (context, error, stackTrace) {
+                                      // Fallback to asset image
+                                      return Image.asset(
+                                        'asset/image/weblogo.png',
+                                        width: 60,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
                                   ),
                                   const SizedBox(width: 8),
 
-                                  // ── product name ──
+                                  //product name
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
+                                        SizedBox(height: 15),
                                         Text(
                                           itemMap['name'] ?? 'Item',
-                                          overflow: TextOverflow.ellipsis,
+                                          softWrap: true,
+                                          overflow: TextOverflow.visible,
                                         ),
+                                        if (item['type'] == 'prescription') ...[
+                                          SizedBox(height: 7),
+                                          Text(
+                                            overflow: TextOverflow.visible,
+                                            'Strength: ${item['strength'] ?? 'Unknown'}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ],
                                         const SizedBox(height: 5),
                                         Text(
                                           'Quantity: x${itemMap['quantity'] ?? 1}',
@@ -401,7 +418,7 @@ class OrderCard extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  // ── price ──
+                                  //price
                                   Text(
                                     'RM ${_formatTotal(itemMap['price'])}',
                                     style: const TextStyle(
@@ -413,7 +430,43 @@ class OrderCard extends StatelessWidget {
                             );
                           }).toList() ??
                           [const Text('No items')]),
-                      const Divider(height: 30),
+                      const Divider(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Subtotal:',
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'RM ${_formatTotal(data['subtotal'])}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10,),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Shipping Fee:',
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'RM ${_formatTotal(data['shippingFee'])}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10,),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

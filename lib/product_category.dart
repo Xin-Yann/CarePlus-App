@@ -81,10 +81,13 @@ class ProductCategory extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              Product(symptom: category['name']),
+                          builder: (context) => Product(
+                            symptom: category['name'],
+                            type: 'uncontrolled',
+                          ),
                         ),
                       );
+
                     },
                     child: Container(
                       decoration: BoxDecoration(

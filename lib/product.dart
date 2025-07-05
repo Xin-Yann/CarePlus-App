@@ -6,8 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class Product extends StatelessWidget {
   final String symptom;
-
-  const Product({super.key, required this.symptom});
+  final String type;
+  const Product({super.key, required this.symptom, required this.type});
 
   String formatPrice(dynamic priceValue) {
     if (priceValue == null) return 'RM 0.00';
@@ -77,7 +77,7 @@ class Product extends StatelessWidget {
               final price = product['price'];
               final description =
                   product['description'] ?? 'No description available';
-
+              final stock = product['stock'];
               return Container(
                 margin: const EdgeInsets.only(bottom: 20),
                 padding: const EdgeInsets.all(12),
@@ -104,6 +104,8 @@ class Product extends StatelessWidget {
                           description: description,
                           price: formatPrice(price),
                           symptom: symptom,
+                          type: type,
+                          stock: stock,
                         ),
                       ),
                     );
@@ -158,7 +160,8 @@ class Product extends StatelessWidget {
                                 bottom: 0,
                                 right: 0,
                                 child: ElevatedButton(
-                                    onPressed: () async {
+                                    onPressed:stock > 0
+                                        ?  () async {
                                       final user = FirebaseAuth.instance.currentUser;
                                       if (user == null) {
                                         ScaffoldMessenger.of(context).showSnackBar(
@@ -187,6 +190,7 @@ class Product extends StatelessWidget {
                                                 'price': price,
                                                 'quantity': 1,
                                                 'symptom': symptom,
+                                                'type': 'uncontrolled'
                                               }
                                             ],
                                           });
@@ -221,6 +225,7 @@ class Product extends StatelessWidget {
                                               'quantity': 1,
                                               'timestamp': Timestamp.now(),
                                               'symptom': symptom,
+                                              'type': 'uncontrolled'
                                             });
                                           }
 
@@ -241,14 +246,14 @@ class Product extends StatelessWidget {
                                           const SnackBar(content: Text('Failed to update cart')),
                                         );
                                       }
-                                    },
+                                    }:null,
                                     style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF6B4518),
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                   ),
-                                  child: const Text('Add to Cart'),
+                                  child: Text(stock > 0 ? 'Add to Cart' : 'Out of Stock'),
                                 )
 
                               ),

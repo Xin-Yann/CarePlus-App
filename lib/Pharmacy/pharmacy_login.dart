@@ -176,7 +176,7 @@ class _LoginPharmacy extends State<PharmacyLogin> {
             ),
             if (errorText != null)
               Padding(
-                padding: const EdgeInsets.only(top: 8.0),
+                padding: const EdgeInsets.only(top: 8.0, left: 30, right: 10),
                 child: Text(
                   errorText!,
                   style: TextStyle(

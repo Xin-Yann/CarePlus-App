@@ -143,7 +143,7 @@ class _LoginState extends State<Login> {
             ),
             if (errorText != null)
               Padding(
-                padding: const EdgeInsets.only(top: 8.0),
+                padding: const EdgeInsets.only(top: 8.0,left: 30, right: 20),
                 child: Text(
                   errorText!,
                   style: TextStyle(

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../CustomTextField.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,6 +9,10 @@ import 'package:crypto/crypto.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:html' as html;
+import 'dart:io';
+import 'dart:io' as io;
 
 class PharmacyRegister extends StatefulWidget {
   const PharmacyRegister({Key? key}) : super(key: key);
@@ -43,30 +48,76 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
   }
 
   Future<void> _pickAndUploadImage() async {
-    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedImage == null) return;
+    const imgbbApiKey = 'e6f550d58c3ce65d422f1483a8b92ef7';
 
-    setState(() {
-      _profileImage = File(pickedImage.path);
-    });
+    if (kIsWeb) {
+      final uploadInput = html.FileUploadInputElement()..accept = 'image/*';
+      uploadInput.click();
 
-    final bytes = await _profileImage!.readAsBytes();
-    final base64Image = base64Encode(bytes);
+      uploadInput.onChange.listen((event) {
+        final file = uploadInput.files?.first;
+        if (file == null) return;
 
-    final response = await http.post(
-      Uri.parse('https://api.imgur.com/3/image'),
-      headers: {'Authorization': 'Client-ID f10c4d5c7204b1b'},
-      body: {'image': base64Image, 'type': 'base64'},
-    );
+        final reader = html.FileReader();
+        reader.readAsArrayBuffer(file);
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      setState(() {
-        _imageUrl = data['data']['link'];
+        reader.onLoadEnd.listen((event) async {
+          final bytes = reader.result as Uint8List; // ✅ fix
+          final base64Image = base64Encode(bytes);
+
+          final response = await http.post(
+            Uri.parse('https://api.imgbb.com/1/upload?key=$imgbbApiKey'),
+            body: {'image': base64Image},
+          );
+
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            final newImageUrl = data['data']['url'];
+            setState(() {
+              _imageUrl = newImageUrl;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Image uploaded successfully')),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Image upload failed')),
+            );
+          }
+        });
       });
-      print('Uploaded: $_imageUrl');
     } else {
-      print('Upload failed: ${response.body}');
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      if (picked == null) return;
+
+      final imageTemp = io.File(picked.path);
+      setState(() {
+        _profileImage = imageTemp;
+      });
+
+      final bytes = await picked.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      final response = await http.post(
+        Uri.parse('https://api.imgbb.com/1/upload?key=$imgbbApiKey'),
+        body: {'image': base64Image},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final newImageUrl = data['data']['url'];
+        setState(() {
+          _imageUrl = newImageUrl;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image uploaded successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Image upload failed')));
+      }
     }
   }
 
@@ -89,7 +140,7 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
 
     if (!isDoctorEmail) {
       setState(() {
-        errorText = "Only emails ending in @doctor.com are allowed.";
+        errorText = "Only emails ending in @pharmacy.com are allowed.";
       });
       return;
     }
@@ -277,20 +328,46 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
 
             SizedBox(height: 25.0),
             _profileImage != null
-                ? ClipOval(
-                  child: Image.file(
-                    _profileImage!,
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topCenter, // <-- center the image
-                  ),
-                )
+                ? ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                _profileImage!,
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+              ),
+            )
+                : (_imageUrl != null && _imageUrl!.isNotEmpty)
+                ? ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                _imageUrl!,
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+                loadingBuilder: (
+                    context,
+                    child,
+                    loadingProgress,
+                    ) {
+                  if (loadingProgress == null) return child;
+                  return const CircularProgressIndicator();
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.broken_image,
+                    size: 50,
+                  );
+                },
+              ),
+            )
                 : CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.grey[300],
-                  child: Icon(Icons.person, size: 50),
-                ),
+              radius: 50,
+              backgroundColor: Colors.grey[300],
+              child: const Icon(Icons.person, size: 50),
+            ),
 
             TextButton(
               onPressed: _pickAndUploadImage,

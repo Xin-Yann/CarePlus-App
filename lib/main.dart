@@ -289,7 +289,7 @@ class _MyAppState extends State<MyApp> {
                                     "Are you a doctor at Care Plus?",
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: 25,
+                                      fontSize: 22,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'Crimson',
                                       color: const Color(0XFF4B352A),
