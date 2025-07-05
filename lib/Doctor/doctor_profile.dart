@@ -269,7 +269,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
         print(
           "The doctor must reauthenticate before this operation can be executed.",
         );
-        // You can show a dialog to prompt re-authentication here
+
       } else {
         print("Error deleting doctor account: ${e.message}");
       }

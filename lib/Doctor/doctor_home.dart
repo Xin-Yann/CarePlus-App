@@ -79,31 +79,7 @@ class _DoctorHomeState extends State<DoctorHome> {
                     Padding(
                       padding: const EdgeInsets.all(
                         8.0,
-                      ).copyWith(top: 35.0, left: 200.0),
-                      child: Builder(
-                        builder:
-                            (context) => GestureDetector(
-                              onTap: () {
-                                print("Tapped");
-                                Navigator.pushReplacementNamed(
-                                  context,
-                                  '/cart',
-                                );
-                              },
-                              child: Image.asset(
-                                'asset/image/cart.png',
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                      ),
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.all(
-                        8.0,
-                      ).copyWith(top: 35.0, left: 15.0),
+                      ).copyWith(top: 35.0, left: 255.0),
                       child: Builder(
                         builder:
                             (context) => GestureDetector(

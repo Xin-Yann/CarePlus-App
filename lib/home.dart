@@ -26,7 +26,6 @@ class _HomeState extends State<Home> {
 
   Future<void> _signOutUser() async {
     await FirebaseAuth.instance.signOut();
-    // Optional: Navigate to login page
     Navigator.pushReplacementNamed(context, '/');
   }
 

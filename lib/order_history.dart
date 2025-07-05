@@ -128,8 +128,15 @@ class _OrderHistoryPageState extends State<OrderHistory>
 
   // Credit Card Tab Content
   Widget _buildCreditCardTab() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Center(child: Text('Please sign in.'));
+    }
+
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('orders')
+        .where('email',  isEqualTo: user.email)
         .where('paymentType', isEqualTo: 'Debit/Credit Card');
 
     if (selectedStatus != 'All') {
@@ -141,18 +148,21 @@ class _OrderHistoryPageState extends State<OrderHistory>
     return StreamBuilder<QuerySnapshot>(
       stream: query.snapshots(),
       builder: (context, snap) {
+        if (snap.hasError) {
+          print('Firestore query error: ${snap.error}');
+        }
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
         if (!snap.hasData || snap.data!.docs.isEmpty) {
-          return const Center(child: Text('No credit-card orders yet.'));
+          return const Center(child: Text('No credit card orders yet.'));
         }
 
-        final orders =
-        snap.data!.docs
+        final orders = snap.data!.docs
             .map((d) => d.data() as Map<String, dynamic>)
             .toList();
 
+        debugPrint('Found ${orders.length} credit‑card order(s):');
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -167,9 +177,17 @@ class _OrderHistoryPageState extends State<OrderHistory>
   }
 
   Widget _buildEWalletTab() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Center(child: Text('Please sign in.'));
+    }
+
+    String userEmail = user.email ?? '';
+
     Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('orders')
-        .where('paymentType', isEqualTo: 'TNG');
+        .where('paymentType', isEqualTo: 'TNG')
+        .where('email', isEqualTo: userEmail);
 
     if (selectedStatus != 'All') {
       query = query.where('orderStatus', isEqualTo: selectedStatus);
@@ -184,11 +202,10 @@ class _OrderHistoryPageState extends State<OrderHistory>
           return const Center(child: CircularProgressIndicator());
         }
         if (!snap.hasData || snap.data!.docs.isEmpty) {
-          return const Center(child: Text('No TNG e-wallet orders yet.'));
+          return const Center(child: Text('No tng orders yet.'));
         }
 
-        final orders =
-        snap.data!.docs
+        final orders = snap.data!.docs
             .map((d) => d.data() as Map<String, dynamic>)
             .toList();
 
