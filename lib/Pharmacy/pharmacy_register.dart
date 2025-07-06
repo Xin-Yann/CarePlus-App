@@ -9,9 +9,7 @@ import 'package:crypto/crypto.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:html' as html;
-import 'dart:io';
 import 'dart:io' as io;
 
 class PharmacyRegister extends StatefulWidget {
@@ -30,8 +28,6 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
   final TextEditingController contact = TextEditingController();
   final TextEditingController address = TextEditingController();
   final TextEditingController password = TextEditingController();
-  // final TextEditingController map = TextEditingController();
-  // final TextEditingController socialMedia = TextEditingController();
   final TextEditingController operationHours = TextEditingController();
   final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
   final passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{6,}$');
@@ -62,7 +58,7 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
         reader.readAsArrayBuffer(file);
 
         reader.onLoadEnd.listen((event) async {
-          final bytes = reader.result as Uint8List; // ✅ fix
+          final bytes = reader.result as Uint8List;
           final base64Image = base64Encode(bytes);
 
           final response = await http.post(
@@ -168,7 +164,6 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
     }
 
     try {
-      // Map of state to possible doc IDs
       Map<String, List<String>> stateDocIds = {
         "Perlis": ["P1", "P2", "P3"],
         "Kedah": ["P4", "P5", "P6"],
@@ -185,7 +180,6 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
         "Sarawak": ["P37", "P38", "P39"],
       };
 
-      // Extract the last word of the address
       String addressText = address.text.trim().toLowerCase();
       String? matchedState;
       for (String state in stateDocIds.keys) {
@@ -211,7 +205,6 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
         return;
       }
 
-      // Find an available docId
       String selectedDocId = '';
       for (String id in stateDocIds[matchedState]!) {
         DocumentSnapshot doc =
@@ -234,7 +227,6 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
         return;
       }
 
-      // Create user
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(
             email: email.text.trim(),
@@ -255,8 +247,6 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
               'email': email.text.trim(),
               'password': hashValue(password.text),
               'contact': contact.text.trim(),
-              // 'map': map.text.trim(),
-              // 'social_media': socialMedia.text.trim(),
               'address': address.text.trim(),
               'operation_hours': operationHours.text.trim(),
               'imageUrl': _imageUrl ?? '',
@@ -405,7 +395,7 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -460,7 +450,7 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                   ),
                 ),
@@ -491,80 +481,7 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
               onChanged: () {},
             ),
 
-            SizedBox(height: 14.0),
-
-            // Padding(
-            //   padding: const EdgeInsets.all(8.0),
-            //   child: Container(
-            //     width: 382,
-            //     height: 60,
-            //     child: TextField(
-            //       controller: map,
-            //       decoration: InputDecoration(
-            //         hintText: 'Google Maps Link',
-            //         hintStyle: TextStyle(
-            //           color: Colors.grey[500],
-            //           fontStyle: FontStyle.italic,
-            //         ),
-            //         filled: true,
-            //         fillColor: Colors.white,
-            //         contentPadding: EdgeInsets.symmetric(
-            //           horizontal: 16,
-            //           vertical: 16,
-            //         ),
-            //         enabledBorder: OutlineInputBorder(
-            //           borderRadius: BorderRadius.circular(30),
-            //           borderSide: BorderSide(color: Colors.white),
-            //         ),
-            //         focusedBorder: OutlineInputBorder(
-            //           borderRadius: BorderRadius.circular(30),
-            //           borderSide: BorderSide(
-            //             color: Colors.white,
-            //           ), // Border when focused
-            //         ),
-            //       ),
-            //     ),
-            //   ),
-            // ),
-            //
-            // SizedBox(height: 14.0),
-            //
-            // Padding(
-            //   padding: const EdgeInsets.all(8.0),
-            //   child: Container(
-            //     width: 382,
-            //     height: 60,
-            //     child: TextField(
-            //       controller: socialMedia,
-            //       keyboardType: TextInputType.number,
-            //       decoration: InputDecoration(
-            //         hintText: 'Social Media Page Link',
-            //         hintStyle: TextStyle(
-            //           color: Colors.grey[500],
-            //           fontStyle: FontStyle.italic,
-            //         ),
-            //         filled: true,
-            //         fillColor: Colors.white,
-            //         contentPadding: EdgeInsets.symmetric(
-            //           horizontal: 16,
-            //           vertical: 16,
-            //         ),
-            //         enabledBorder: OutlineInputBorder(
-            //           borderRadius: BorderRadius.circular(30),
-            //           borderSide: BorderSide(color: Colors.white),
-            //         ),
-            //         focusedBorder: OutlineInputBorder(
-            //           borderRadius: BorderRadius.circular(30),
-            //           borderSide: BorderSide(
-            //             color: Colors.white,
-            //           ), // Border when focused
-            //         ),
-            //       ),
-            //     ),
-            //   ),
-            // ),
-
-            SizedBox(height: 20.0),
+            SizedBox(height: 34.0),
 
             Row(
               children: [
@@ -580,7 +497,7 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
                   ),
                 ),
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, // align left
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'I understand and agree with the',
@@ -665,62 +582,18 @@ class _RegisterPharmacy extends State<PharmacyRegister> {
                   setState(() {});
                 },
                 style: ElevatedButton.styleFrom(
-                  minimumSize: Size(200, 50), // width: 200, height: 50
+                  minimumSize: Size(200, 50),
                   textStyle: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Crimson',
                   ),
-                  backgroundColor: const Color(0xFF6B4518), // Background color
+                  backgroundColor: const Color(0xFF6B4518),
                   foregroundColor: Colors.white,
                 ),
                 child: Text('Register'),
               ),
             ),
-
-            // Builder(
-            //   builder:
-            //       (context) => GestureDetector(
-            //     onTap: () {
-            //       print("Tapped");
-            //       Navigator.pushNamed(context, '/login');
-            //     },
-            //     child: Text(
-            //       'Login',
-            //       textAlign: TextAlign.center,
-            //       style: TextStyle(
-            //         color: Color(0xFF6B4518),
-            //         decoration: TextDecoration.underline,
-            //         fontFamily:
-            //         'Crimson', // Make sure your font is declared correctly in pubspec.yaml
-            //         fontSize: 20,
-            //       ),
-            //     ),
-            //   ),
-
-            // Padding(
-            //   padding: const EdgeInsets.all(8.0),
-            //   child: Builder(
-            //     builder:
-            //         (context) => GestureDetector(
-            //           onTap: () {
-            //             print("Tapped");
-            //             Navigator.pushNamed(context, '/doctor_login');
-            //           },
-            //           child: Text(
-            //             'Doctor Login',
-            //             textAlign: TextAlign.center,
-            //             style: TextStyle(
-            //               color: Color(0xFF6B4518),
-            //               decoration: TextDecoration.underline,
-            //               fontFamily:
-            //                   'Crimson', // Make sure your font is declared correctly in pubspec.yaml
-            //               fontSize: 20,
-            //             ),
-            //           ),
-            //         ),
-            //   ),
-            // ),
           ],
         ),
       ),
@@ -738,14 +611,13 @@ class ContactInputFormat extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // Extract digits only from new input
+
     String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
 
     String formatted = '';
     int maxLength;
     String pattern;
 
-    // Decide which pattern to use
     if (forcedPattern != null) {
       pattern = forcedPattern!;
     } else {
@@ -772,7 +644,6 @@ class ContactInputFormat extends TextInputFormatter {
       formatted = digitsOnly;
     }
 
-    // Count digits before the original cursor position
     int digitsBeforeCursor = 0;
     for (int i = 0; i < newValue.selection.end; i++) {
       if (i < newValue.text.length &&
@@ -780,7 +651,7 @@ class ContactInputFormat extends TextInputFormatter {
         digitsBeforeCursor++;
       }
     }
-    // Map digitsBeforeCursor to the formatted string index
+
     int cursorPos = 0;
     int digitsCounted = 0;
     while (cursorPos < formatted.length && digitsCounted < digitsBeforeCursor) {

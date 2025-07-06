@@ -102,7 +102,7 @@ class _MyAppState extends State<MyApp> {
             return DoctorePrescriptionMedList(session: args['session']);
           } else {
             return const Scaffold(
-              body: Center(child: Text('❌ No session data found')),
+              body: Center(child: Text('No session data found')),
             );
           }
         },
@@ -116,7 +116,7 @@ class _MyAppState extends State<MyApp> {
             );
           } else {
             return const Scaffold(
-              body: Center(child: Text('❌ Missing prescription arguments')),
+              body: Center(child: Text('Missing prescription arguments')),
             );
           }
         },
@@ -127,7 +127,7 @@ class _MyAppState extends State<MyApp> {
             return DoctorePrescriptionDetails(session: args);
           } else {
             return const Scaffold(
-              body: Center(child: Text('❌ No session data found')),
+              body: Center(child: Text('No session data found')),
             );
           }
         },
@@ -143,7 +143,7 @@ class _MyAppState extends State<MyApp> {
             );
           } else {
             return const Scaffold(
-              body: Center(child: Text('❌ No session data found')),
+              body: Center(child: Text('No session data found')),
             );
           }
         },
@@ -265,8 +265,6 @@ class _MyAppState extends State<MyApp> {
                   }
                 ),
               ),
-
-              //Admin Verification
 
               SizedBox(height: 85.0),
 
@@ -433,6 +431,8 @@ class _MyAppState extends State<MyApp> {
                       },
                     ),
                   ),
+
+                  //Pharmacy Portal
                   Padding(
                     padding: const EdgeInsets.all(8.0).copyWith(left: 20.0),
                     child: Builder(
@@ -480,7 +480,6 @@ class _MyAppState extends State<MyApp> {
 
                                             return StatefulBuilder(
                                               builder: (context, setState) {
-                                                // Add listener to clear error when typing
                                                 _codeController.addListener(() {
                                                   if (errorText != null) {
                                                     setState(() {

@@ -17,7 +17,6 @@ class _LoginState extends State<Login> {
   bool _obscurePassword = true;
 
   String? errorText;
-  //final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> _loginUser() async {
     try {

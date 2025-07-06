@@ -15,7 +15,7 @@ class PharmacyHome extends StatefulWidget {
 class _PharmacyHomeState extends State<PharmacyHome> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _selectedMonth = DateFormat('yyyy-MM').format(DateTime.now());
-  String _selectedType = 'All'; // default value
+  String _selectedType = 'All';
   final TextEditingController name = TextEditingController();
   String loggedInEmail = '';
 
@@ -57,29 +57,41 @@ class _PharmacyHomeState extends State<PharmacyHome> {
     if (user?.email == null) return;
 
     final email = user!.email!;
+    print('Searching for pharmacy with email: $email');
+
     for (final entry in stateDocIds.entries) {
-      final state  = entry.key;
+      final state = entry.key;
       for (final id in entry.value) {
         final doc = await FirebaseFirestore.instance
             .collection('pharmacy')
-            .doc('state')           // ↙ verify this level is correct
+            .doc('state')
             .collection(state)
             .doc(id)
             .get();
 
         if (!doc.exists) continue;
+
         final data = doc.data();
-        if (data?['email'] == email) {
+        final docEmail = data?['email']?.toString().toLowerCase().trim();
+
+        if (docEmail == email.toLowerCase().trim()) {
+          debugPrint('Match found: $state / $id');
+
           setState(() {
-            pharmacyData = data;
-            name.text    = data?['name'] ?? '';   // 👈 now visible in UI
+            pharmacyData   = data;
+            if (data?['name'] != null && name is TextEditingController) {
+              name.text = data!['name'];
+            }
           });
-          return; // stop looping
+
+          return;
         }
       }
     }
-    debugPrint('Pharmacy record not found for $email');
+
+    debugPrint(' Pharmacy record not found for $email');
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +100,6 @@ class _PharmacyHomeState extends State<PharmacyHome> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ── Top Bar ──
             Row(
               children: [
                 Padding(
@@ -123,22 +134,24 @@ class _PharmacyHomeState extends State<PharmacyHome> {
             ),
 
             Padding(
-              padding: const EdgeInsets.only(left: 20, top: 10, bottom: 10),
-              child: Text(
-                'Welcome, ${name.text}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Crimson',
+              padding: const EdgeInsets.only(left: 20, top: 20, bottom: 10),
+              child: Center(
+                child: Text(
+                  'Welcome, ${name.text}',
+                  textAlign: TextAlign.center,
+                  softWrap: true,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Crimson',
+                  ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 20.0),
 
-            // ── Title ──
             Padding(
-              padding: const EdgeInsets.only(top: 25.0),
+              padding: const EdgeInsets.only(top: 20.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
@@ -165,7 +178,7 @@ class _PharmacyHomeState extends State<PharmacyHome> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final Set<String> availableTypes = {}; // 👈 collect types first
+                final Set<String> availableTypes = {};
                 final Map<String, Map<String, double>> symptomTotals = {};
 
                 for (final doc in snapshot.data!.docs) {
@@ -180,7 +193,7 @@ class _PharmacyHomeState extends State<PharmacyHome> {
                   for (final item in items) {
                     final symptom = item['symptom']?.toString() ?? 'Unknown';
                     final type = item['type']?.toString() ?? 'Unknown';
-                    availableTypes.add(type); // ✅ collect for dropdown
+                    availableTypes.add(type);
 
                     final rawPrice = item['price'];
                     double unitPrice =
@@ -206,7 +219,7 @@ class _PharmacyHomeState extends State<PharmacyHome> {
                 final typeOptions = [
                   'All',
                   ...availableTypes.toList()..sort(),
-                ]; // ✅ now it's safe
+                ];
 
                 if (symptomTotals.isEmpty) {
                   return const Padding(
@@ -215,7 +228,6 @@ class _PharmacyHomeState extends State<PharmacyHome> {
                   );
                 }
 
-                // Step 1: Flatten nested map
                 final Map<String, double> flatSymptomMap = {};
                 symptomTotals.forEach((type, symptomsMap) {
                   if (_selectedType != 'All' && type != _selectedType) return;
@@ -226,7 +238,6 @@ class _PharmacyHomeState extends State<PharmacyHome> {
                   });
                 });
 
-                // Step 2: Early return check
                 if (flatSymptomMap.isEmpty) {
                   return const Padding(
                     padding: EdgeInsets.only(top: 40),
@@ -234,7 +245,7 @@ class _PharmacyHomeState extends State<PharmacyHome> {
                   );
                 }
 
-                // Step 3: Build chart sections
+                //Pie Chart
                 final symptoms = flatSymptomMap.keys.toList()..sort();
                 final grandTotal = flatSymptomMap.values.fold(
                   0.0,
@@ -286,7 +297,7 @@ class _PharmacyHomeState extends State<PharmacyHome> {
                             },
                           ),
 
-                          const SizedBox(width: 24), // spacing between filters
+                          const SizedBox(width: 24),
                           // Filter by Type
                           const Text(
                             'Type:',
@@ -330,7 +341,7 @@ class _PharmacyHomeState extends State<PharmacyHome> {
                           'Type:',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        const SizedBox(height: 4), // small gap under the label
+                        const SizedBox(height: 4),
                         Wrap(
                           alignment: WrapAlignment.start,
                           spacing: 12,

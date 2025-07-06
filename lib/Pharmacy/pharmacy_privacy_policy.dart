@@ -41,7 +41,7 @@ class _PharmacyPrivacyPolicyState extends State<PharmacyPrivacyPolicy> {
             style: TextStyle(
               color: Color(0xFF6B4518),
               fontFamily:
-              'Crimson', // Make sure your font is declared correctly in pubspec.yaml
+              'Crimson',
               fontSize: 40,
             ),
           ),

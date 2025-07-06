@@ -11,6 +11,7 @@ class PharmacyManageProduct extends StatefulWidget {
 }
 
 class _PharmacyManageProductState extends State<PharmacyManageProduct> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final List<Map<String, String>> productCategories = [
     {'name': 'Allergy'},
     {'name': 'Anxiety'},

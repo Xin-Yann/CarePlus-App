@@ -28,14 +28,12 @@ class PharmacyFooter extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => PharmacyHome()),
                     );
                   },
-                  //route: '/pharmacy_home',
                   width: 30,
                   height: 30,
                 ),
                 _PharmacyFooterItem(
                   imagePath: 'asset/image/drug.png',
                   label: 'Product',
-                  //route: '/product_category',
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
@@ -48,7 +46,6 @@ class PharmacyFooter extends StatelessWidget {
                _PharmacyFooterItem(
                   imagePath: 'asset/image/order.png',
                   label: 'Orders',
-                  //route: '/',
                   onTap: () {
                     Navigator.pushReplacement(
                       context,
@@ -58,13 +55,7 @@ class PharmacyFooter extends StatelessWidget {
                   width: 31,
                   height: 31,
                 ),
-                // _PharmacyFooterItem(
-                //   imagePath: 'asset/image/order_history.png',
-                //   label: 'Transaction',
-                //
-                //   width: 31,
-                //   height: 31,
-                // ),
+
                 _PharmacyFooterItem(
                   imagePath: 'asset/image/user.png',
                   label: 'Account',
@@ -74,7 +65,6 @@ class PharmacyFooter extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => PharmacyProfile()),
                     );
                   },
-                  //route: '/pharmacy_profile',
                   width: 30,
                   height: 30,
                 ),
@@ -89,7 +79,6 @@ class PharmacyFooter extends StatelessWidget {
 class _PharmacyFooterItem extends StatelessWidget {
   final String imagePath;
   final String label;
-  //final String route;
   final double width;
   final double height;
   final VoidCallback? onTap;
@@ -97,7 +86,6 @@ class _PharmacyFooterItem extends StatelessWidget {
   const _PharmacyFooterItem({
     required this.imagePath,
     required this.label,
-    // required this.route,
     this.width = 24.0,
     this.height = 24.0,
     this.onTap,
@@ -108,9 +96,6 @@ class _PharmacyFooterItem extends StatelessWidget {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
-        // onTap: () {
-        //   Navigator.pushReplacementNamed(context, route);
-        // },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

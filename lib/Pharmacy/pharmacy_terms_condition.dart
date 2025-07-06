@@ -97,7 +97,6 @@ class _PharmacyTermsConditionState extends State<PharmacyTermsCondition> {
               softWrap: true,
             ),
           ),
-
         ],
       ),
     );

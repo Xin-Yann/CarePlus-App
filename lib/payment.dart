@@ -68,7 +68,7 @@ class _PaymentPageState extends State<PaymentPage>
     return _calculateSubtotal() + _calculateShippingFee();
   }
 
-  /// Generates a 6-digit OTP and sets expiry for 10 minutes
+  //Generate 6 digit OTP
   late String _otp;
   late DateTime _expiryTime;
 
@@ -193,7 +193,6 @@ class _PaymentPageState extends State<PaymentPage>
     final ids = stateDocIds[state];
     if (ids == null || ids.isEmpty) return null;
 
-    // Simple round‑robin: spread the load fairly each time an order comes in.
     final index = DateTime.now().millisecondsSinceEpoch % ids.length;
     return ids[index];
   }
@@ -386,7 +385,6 @@ class _PaymentPageState extends State<PaymentPage>
               ElevatedButton(
                 onPressed: () async {
                   int currentTabIndex = _tabController.index;
-                  final otp = generateOTP();
 
                   if (currentTabIndex == 0) {
                     // Credit Card tab
@@ -442,8 +440,7 @@ class _PaymentPageState extends State<PaymentPage>
                       );
                     }
                   } else if (currentTabIndex == 1) {
-                    // 💰 E-Wallet tab
-                    // 1️⃣ Pre-fetch all product documents BEFORE transaction
+                    // E-Wallet tab
                     final Map<String, Map<String, dynamic>> productDataMap = {};
                     final Map<String, DocumentReference> productRefMap = {};
 
@@ -496,7 +493,6 @@ class _PaymentPageState extends State<PaymentPage>
                       }
                     }
 
-// 2️⃣ Run transaction using cached data
                     await FirebaseFirestore.instance.runTransaction((transaction) async {
                       final counterRef = FirebaseFirestore.instance.collection('metadata').doc('orderCounter');
                       final counterSnap = await transaction.get(counterRef);
@@ -547,7 +543,7 @@ class _PaymentPageState extends State<PaymentPage>
                           throw Exception('Insufficient stock for $drugId (stock: $currentStock, qty: $qty)');
                         }
 
-                        print('✅ Deducting $qty from $productRef (stock: $currentStock)');
+                        print('Deducting $qty from $productRef (stock: $currentStock)');
                         transaction.update(productRef, {
                           'stock': FieldValue.increment(-qty),
                         });
@@ -709,8 +705,8 @@ class _PaymentPageState extends State<PaymentPage>
             controller: cvv,
             obscureText: true,
             inputFormatters: [
-              LengthLimitingTextInputFormatter(3), // Limits to 3 characters
-              FilteringTextInputFormatter.digitsOnly, // Allows only digits
+              LengthLimitingTextInputFormatter(3),
+              FilteringTextInputFormatter.digitsOnly,
             ],
             decoration: InputDecoration(
               hintText: 'CVV',
@@ -741,7 +737,6 @@ class _PaymentPageState extends State<PaymentPage>
 
   Widget _buildEWalletTab() {
     return ListView(
-      // or whatever height your bottom bar is
       children: [
         Column(
           children: [
@@ -779,7 +774,6 @@ class CardNumberInputFormat extends TextInputFormatter {
       formatted += digitsOnly[i];
     }
 
-    // Count digits before the original cursor position
     int digitsBeforeCursor = 0;
     for (int i = 0; i < newValue.selection.end; i++) {
       if (i < newValue.text.length &&
@@ -787,7 +781,7 @@ class CardNumberInputFormat extends TextInputFormatter {
         digitsBeforeCursor++;
       }
     }
-    // Map digitsBeforeCursor to the formatted string index
+
     int cursorPos = 0;
     int digitsCounted = 0;
     while (cursorPos < formatted.length && digitsCounted < digitsBeforeCursor) {

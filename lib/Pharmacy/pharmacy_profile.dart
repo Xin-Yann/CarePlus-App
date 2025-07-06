@@ -5,12 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:html' as html;
-import 'dart:io';
 import 'dart:io' as io;
 
 class PharmacyProfile extends StatefulWidget {
@@ -21,12 +18,12 @@ class PharmacyProfile extends StatefulWidget {
 }
 
 class _PharmacyProfileState extends State<PharmacyProfile> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController name = TextEditingController();
   final TextEditingController email = TextEditingController();
   final TextEditingController contact = TextEditingController();
   final TextEditingController address = TextEditingController();
   final TextEditingController password = TextEditingController();
-  // final TextEditingController map = TextEditingController();
   final TextEditingController operationHours = TextEditingController();
   bool isEditing = false;
   File? _profileImage;
@@ -67,31 +64,17 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null || user.email == null) {
-      print('User is not logged in or missing email.');
+      print('User not logged in or missing email');
       return;
     }
 
-    final Useremail = user.email!;
-
-    // Map<String, List<String>> stateDocIds = {
-    //   "Perlis": ["P1", "P2", "P3"],
-    //   "Kedah": ["P4", "P5", "P6"],
-    //   "Penang": ["P7", "P8", "P9"],
-    //   "Perak": ["P10", "P11", "P12"],
-    //   "Selangor": ["P13", "P14", "P15"],
-    //   "Negeri Sembilan": ["P16", "P17", "P18"],
-    //   "Melaka": ["P19", "P20", "P21"],
-    //   "Kelantan": ["P22", "P23", "P24"],
-    //   "Terengganu": ["P25", "P26", "P27"],
-    //   "Pahang": ["P28", "P29", "P30"],
-    //   "Johor": ["P31", "P32", "P33"],
-    //   "Sabah": ["P34", "P35", "P36"],
-    //   "Sarawak": ["P37", "P38", "P39"],
-    // };
+    final userEmail = user.email!.trim().toLowerCase();
+    print('Searching pharmacy record for: $userEmail');
 
     for (final entry in stateDocIds.entries) {
-      final state = entry.key;
-      for (final id in entry.value) {
+      final String state = entry.key;
+
+      for (final String id in entry.value) {
         final doc = await FirebaseFirestore.instance
             .collection('pharmacy')
             .doc('state')
@@ -99,35 +82,38 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
             .doc(id)
             .get();
 
-        if (doc.exists) {
-          final data = doc.data() as Map<String, dynamic>?;
+        if (!doc.exists) continue;
 
-          if (data != null && data.containsKey('email')) {
-            print('Checking ${state} / ${id} -> Email: ${data['email']}');
-            if (data['email'] == Useremail) {
-              setState(() {
-                pharmacyData = data;
-                pharmacyImageUrl = pharmacyData?['imageUrl'] ?? '';
-                _imageUrl = pharmacyImageUrl;
-                // Update controllers:
-                name.text = data['name'] ?? '';
-                email.text = data['email'] ?? '';
-                contact.text = data['contact'] ?? '';
-                address.text = data['address'] ?? '';
-                operationHours.text = data['operation_hours'] ?? '';
-                // map.text = data['map'] ?? '';
-              });
-              print('Match found in ${state} / ${id}');
-              return;
-            }
-          }
+        final data = doc.data();
+        if (data == null) continue;
+
+        final docEmail = data['email']?.toString().trim().toLowerCase();
+        print('Checked $state / $id → $docEmail');
+
+        if (docEmail == userEmail) {
+          if (!mounted) return;
+
+          setState(() {
+            pharmacyData = data;
+
+            pharmacyImageUrl = data['imageUrl'] ?? '';
+            _imageUrl = pharmacyImageUrl;
+            name.text = data['name'] ?? '';
+            email.text = data['email'] ?? '';
+            contact.text = data['contact'] ?? '';
+            address.text = data['address'] ?? '';
+            operationHours.text = data['operation_hours'] ?? '';
+          });
+
+          print('Match found in $state / $id');
+          return;
         }
-
       }
     }
 
-    print('Pharmacy record not found.');
+    print('Pharmacy record not found for $userEmail');
   }
+
 
   Future<void> savePharmacyData({String? imageUrl}) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -147,33 +133,13 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
       return;
     }
 
-    // Extract last word from address to detect state
     List<String> words = fullAddress
-        .replaceAll(RegExp(r'[^\w\s]'), '') // Remove punctuation
+        .replaceAll(RegExp(r'[^\w\s]'), '')
         .split(' ')
         .where((w) => w.isNotEmpty)
         .toList();
 
     String lastWord = words.isNotEmpty ? words.last : '';
-
-    // // Map of state to document IDs (make sure this is defined somewhere globally)
-    // Map<String, List<String>> stateDocIds = {
-    //   "Perlis": ["P1", "P2", "P3"],
-    //   "Kedah": ["P4", "P5", "P6"],
-    //   "Penang": ["P7", "P8", "P9"],
-    //   "Perak": ["P10", "P11", "P12"],
-    //   "Selangor": ["P13", "P14", "P15"],
-    //   "Negeri Sembilan": ["P16", "P17", "P18"],
-    //   "Melaka": ["P19", "P20", "P21"],
-    //   "Kelantan": ["P22", "P23", "P24"],
-    //   "Terengganu": ["P25", "P26", "P27"],
-    //   "Pahang": ["P28", "P29", "P30"],
-    //   "Johor": ["P31", "P32", "P33"],
-    //   "Sabah": ["P34", "P35", "P36"],
-    //   "Sarawak": ["P37", "P38", "P39"],
-    // };
-
-    // Find matching state ignoring case
     String? matchedState;
     for (String state in stateDocIds.keys) {
       if (lastWord.toLowerCase() == state.toLowerCase()) {
@@ -197,7 +163,6 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
 
     String? foundDocId;
 
-    // Find the document in the matched state's collection with matching email
     for (final docId in docIds) {
       final docSnapshot = await pharmacyCollection.doc(docId).get();
 
@@ -218,7 +183,6 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
       return;
     }
 
-    // Prepare data for update
     Map<String, dynamic> updatedData = {
       'name': name.text.trim(),
       'address': fullAddress,
@@ -231,7 +195,6 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
       updatedData['imageUrl'] = imageUrl;
     }
 
-    // Update the document in Firestore
     await pharmacyCollection.doc(foundDocId).update(updatedData);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -256,7 +219,7 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
         reader.readAsArrayBuffer(file);
 
         reader.onLoadEnd.listen((event) async {
-          final bytes = reader.result as Uint8List; // ✅ fix
+          final bytes = reader.result as Uint8List;
           final base64Image = base64Encode(bytes);
 
           final response = await http.post(
@@ -334,7 +297,6 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
         return;
       }
 
-      // Extract last word from address
       List<String> words = fullAddress
           .replaceAll(RegExp(r'[^\w\s]'), '')
           .split(' ')
@@ -387,10 +349,8 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
         return;
       }
 
-      // Delete the pharmacy document
       await pharmacyCollection.doc(foundDocId).delete();
 
-      // Delete Firebase Auth user
       await user.delete();
 
       print('Pharmacy account and user deleted successfully.');
@@ -410,7 +370,6 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
       print("Unexpected error: $e");
     }
   }
-
 
   Widget build(BuildContext context) {
     return Scaffold(
@@ -531,13 +490,11 @@ class _PharmacyProfileState extends State<PharmacyProfile> {
                       ),
                     ),
 
-                    // Show "Change Profile Pic" button only when editing
                     if (isEditing)
                       SizedBox(height: 20.0,),
                       Center(
                         child: TextButton.icon(
                           onPressed: () {
-                            // Your function to pick new image
                             _pickAndUploadImage();
                           },
                           icon: Icon(Icons.camera_alt),

@@ -183,7 +183,7 @@ class _HomeState extends State<Home> {
                 ),
               ],
             ),
-
+            //Pharmacy data
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
@@ -196,7 +196,6 @@ class _HomeState extends State<Home> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Height for horizontal scroll area
                           Column(
                             children:
                                 entry.value.map((data) {
@@ -235,7 +234,7 @@ class _HomeState extends State<Home> {
                                           ),
                                         SizedBox(
                                           width: 12,
-                                        ), // spacing between image and text
+                                        ),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
@@ -307,6 +306,7 @@ class _HomeState extends State<Home> {
                 ),
               ],
             ),
+            //Doctor Data
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
