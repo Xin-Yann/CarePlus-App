@@ -1,122 +1,602 @@
+import 'package:careplusapp/forgot_password.dart';
+import 'package:careplusapp/otp.dart';
+import 'package:careplusapp/privacy_policy.dart';
+import 'package:careplusapp/profile.dart';
+import 'package:careplusapp/terms_condition.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'login.dart';
+import 'order_history.dart';
+import 'register.dart';
+import 'home.dart';
+import 'cart.dart';
+import 'package:careplusapp/Doctor/doctor_login.dart';
+import 'package:careplusapp/Doctor/doctor_register.dart';
+import 'package:careplusapp/Doctor/doctor_home.dart';
+import 'package:careplusapp/Doctor/chat_with_patient.dart';
+import 'package:careplusapp/chat_with_doctor.dart';
+import 'pharmacy_list.dart';
+import 'specialist_doctor_list.dart';
+import 'specialist_doctor_details.dart';
+import 'package:careplusapp/Doctor/doctor_profile.dart';
+import 'package:careplusapp/Doctor/doctor_privacy_policy.dart';
+import 'package:careplusapp/Doctor/doctor_terms_condition.dart';
+import 'product_category.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_login.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_register.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_home.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_profile.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_privacy_policy.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_terms_condition.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_manage_product.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_add_product.dart';
+import 'package:careplusapp/Doctor/doctor_ePrescription_patient.dart';
+import 'package:careplusapp/Doctor/doctor_ePrescription_medList.dart';
+import 'package:careplusapp/Doctor/doctor_add_ePrescription.dart';
+import 'package:careplusapp/Doctor/doctor_ePrescription_details.dart';
+import 'package:careplusapp/e-Prescription.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_manage_product.dart';
+import 'package:careplusapp/Pharmacy/pharmacy_add_product.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: 'AIzaSyAsFvE4JJP7mARCB1gdM3mn0gioshJK0Mg',
+      appId: '1:104113039915:android:b4126445f563a92b1c186e',
+      messagingSenderId: '104113039915',
+      projectId: 'careplusapp-2bd07',
+      storageBucket: 'careplusapp-2bd07.firebasestorage.app',
+    ),
+  );
+  runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
+      debugShowCheckedModeBanner: false,
+      // initialRoute: '/',
+      routes: {
+        '/home': (context) => Home(),
+        '/login': (context) => Login(),
+        '/register': (context) => Register(),
+        '/terms_condition': (context) => TermsCondition(),
+        '/privacy_policy': (context) => PrivacyPolicy(),
+        '/forgot_password': (context) => ForgotPassword(),
+        '/profile':(context) => Profile(),
+        '/cart':(context) => Cart(),
+        '/pharmacy_list':(context) => PharmacyList(),
+        '/specialist_doctor_list':(context) => SpecialistDoctorList(),
+        '/product_category':(context) => ProductCategory(),
+        '/doctor_login':(context) => DoctorLogin(),
+        '/doctor_register':(context) => DoctorRegister(),
+        '/doctor_home':(context) => DoctorHome(),
+        '/doctor_profile':(context) => DoctorProfile(),
+        '/doctor_privacy':(context) => DoctorPrivacyPolicy(),
+        '/doctor_terms_condition':(context) => DoctorTermsCondition(),
+        '/pharmacy_login':(context) => PharmacyLogin(),
+        '/pharmacy_register':(context) => PharmacyRegister(),
+        '/pharmacy_home':(context) => PharmacyHome(),
+        '/pharmacy_profile':(context) => PharmacyProfile(),
+        '/pharmacy_privacy':(context) => PharmacyPrivacyPolicy(),
+        '/pharmacy_terms_condition':(context) => PharmacyTermsCondition(),
+        '/pharmacy_manage_product':(context) => PharmacyManageProduct(),
+        '/pharmacy_add_product':(context) => PharmacyAddProduct(),
+        '/chat_with_doctor':(context) => ChatWithDoctor(),
+        '/chat_with_patient':(context) => ChatWithPatient(),
+        '/doctor_ePrescription_patient':(context) => DoctorePrescriptionPatient(),
+        '/doctor_ePrescription_medList': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+          if (args != null && args['session'] != null) {
+            return DoctorePrescriptionMedList(session: args['session']);
+          } else {
+            return const Scaffold(
+              body: Center(child: Text('No session data found')),
+            );
+          }
+        },
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+        '/doctor_add_ePrescription': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+          if (args != null && args['session'] != null && args['drug'] != null) {
+            return DoctorAddePrescription(
+              session: args['session'],
+              drug: args['drug'],
+            );
+          } else {
+            return const Scaffold(
+              body: Center(child: Text('Missing prescription arguments')),
+            );
+          }
+        },
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+        '/doctor_ePrescription_details': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is Map<String, dynamic>) {
+            return DoctorePrescriptionDetails(session: args);
+          } else {
+            return const Scaffold(
+              body: Center(child: Text('No session data found')),
+            );
+          }
+        },
 
-  final String title;
+        '/e-Prescription': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is Map<String, dynamic>) {
+            return ePrescriptionPage(
+              userId: args['userId'],
+              sessionId: args['sessionId'],
+              sessionDate: args['sessionDate'],
+              sessionTime: args['sessionTime'],
+            );
+          } else {
+            return const Scaffold(
+              body: Center(child: Text('No session data found')),
+            );
+          }
+        },
+      },
+      home: Scaffold(
+        backgroundColor: const Color(0xFFE1D9D0),
+        body: Center(
+          child: Column(
+            children: [
+              //Header
+              SizedBox(height: 115.0),
+              Padding(
+                padding: const EdgeInsets.all(
+                  8.0,
+                ).copyWith(top: 15.0, left: 20.0),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {});
+                  },
+                  child: Image.asset(
+                    'asset/image/weblogo.png',
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Welcome to',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontFamily: 'Crimson',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'CAREPLUS',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF6B4518),
+                    fontFamily: 'Crimson',
+                    fontSize: 50,
+                  ),
+                ),
+              ),
 
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
+              //Body
+              Text(
+                'one-stop healthcare application',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF6B4518),
+                  fontFamily: 'Crimson',
+                  fontStyle: FontStyle.italic,
+                  fontSize: 20,
+                ),
+              ),
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+              SizedBox(height: 50.0),
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Builder(
+                  builder: (context) {
+                    return ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/register');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(300, 60),
+                        textStyle: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Crimson',
+                        ),
+                        backgroundColor: const Color(0XFF4B352A),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text('I am New Customer'),
+                    );
+                  }
+                ),
+              ),
 
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+              SizedBox(height: 25.0),
+
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Builder(
+                  builder: (context) {
+                    return ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/login');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(300, 60),
+                        textStyle: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Crimson',
+                        ),
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: const Color(0XFF4B352A),
+                        elevation: 0,
+                        side: BorderSide(
+                          color: Color(0XFF4B352A),
+                          width: 2,
+                        ),
+                      ),
+                      child: Text('I am Existing Customer'),
+                    );
+                  }
+                ),
+              ),
+
+              SizedBox(height: 85.0),
+
+              //Doctor Portal
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0).copyWith(left: 20.0),
+                    child: Builder(
+                      builder: (context) {
+                        return GestureDetector(
+                          onTap: () {
+                            print("Tap detected");
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text(
+                                    "Are you a doctor at Care Plus?",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Crimson',
+                                      color: const Color(0XFF4B352A),
+                                    ),
+                                  ),
+                                  actionsAlignment: MainAxisAlignment.center,
+                                  actions: [
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0XFFB5B5B5),
+                                        foregroundColor: Colors.white,
+                                        textStyle: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Crimson',
+                                        ),
+                                      ),
+                                      child: Text('Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            TextEditingController _codeController = TextEditingController();
+                                            String? errorText;
+
+                                            return StatefulBuilder(
+                                              builder: (context, setState) {
+                                                // Add listener to clear error when typing
+                                                _codeController.addListener(() {
+                                                  if (errorText != null) {
+                                                    setState(() {
+                                                      errorText = null;
+                                                    });
+                                                  }
+                                                });
+
+                                                return AlertDialog(
+                                                  title: Text(
+                                                    "Enter Security Code",
+                                                    style: TextStyle(
+                                                      fontFamily: 'Crimson',
+                                                      fontWeight: FontWeight.bold,
+                                                      color: const Color(0XFF4B352A),
+                                                      fontSize: 25,
+                                                    ),
+                                                  ),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      TextField(
+                                                        controller: _codeController,
+                                                        decoration: InputDecoration(
+                                                          hintText: "Enter code",
+                                                        ),
+                                                        obscureText: true,
+                                                        keyboardType: TextInputType.number,
+                                                      ),
+                                                      if (errorText != null)
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(top: 8.0),
+                                                          child: Text(
+                                                            errorText!,
+                                                            style: TextStyle(
+                                                              color: Colors.red,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    ElevatedButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: const Color(0XFFB5B5B5),
+                                                        foregroundColor: Colors.white,
+                                                        textStyle: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontFamily: 'Crimson',
+                                                        ),
+                                                      ),
+                                                      child: Text("Cancel"),
+                                                    ),
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        if (_codeController.text == "1234") {
+                                                          Navigator.of(context).pop();
+                                                          Navigator.pushReplacementNamed(context, '/doctor_login');
+                                                        } else {
+                                                          setState(() {
+                                                            errorText = "Invalid security code";
+                                                          });
+                                                        }
+                                                      },
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: const Color(0XFF4B352A),
+                                                        foregroundColor: Colors.white,
+                                                        textStyle: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontFamily: 'Crimson',
+                                                        ),
+                                                      ),
+                                                      child: Text("Submit"),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0XFF4B352A),
+                                        foregroundColor: Colors.white,
+                                        textStyle: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Crimson',
+                                        ),
+                                      ),
+                                      child: Text("Continue"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: Image.asset(
+                            'asset/image/doctor.png',
+                            width: 75,
+                            height: 75,
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  //Pharmacy Portal
+                  Padding(
+                    padding: const EdgeInsets.all(8.0).copyWith(left: 20.0),
+                    child: Builder(
+                      builder: (context) {
+                        return GestureDetector(
+                          onTap: () {
+                            print("Tap detected");
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text(
+                                    "Are you a staff at Care Plus?",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Crimson',
+                                      color: const Color(0XFF4B352A),
+                                    ),
+                                  ),
+                                  actionsAlignment: MainAxisAlignment.center,
+                                  actions: [
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0XFFB5B5B5),
+                                        foregroundColor: Colors.white,
+                                        textStyle: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Crimson',
+                                        ),
+                                      ),
+                                      child: Text('Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            TextEditingController _codeController = TextEditingController();
+                                            String? errorText;
+
+                                            return StatefulBuilder(
+                                              builder: (context, setState) {
+                                                _codeController.addListener(() {
+                                                  if (errorText != null) {
+                                                    setState(() {
+                                                      errorText = null;
+                                                    });
+                                                  }
+                                                });
+
+                                                return AlertDialog(
+                                                  title: Text(
+                                                    "Enter Security Code",
+                                                    style: TextStyle(
+                                                      fontFamily: 'Crimson',
+                                                      fontWeight: FontWeight.bold,
+                                                      color: const Color(0XFF4B352A),
+                                                      fontSize: 25,
+                                                    ),
+                                                  ),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      TextField(
+                                                        controller: _codeController,
+                                                        decoration: InputDecoration(
+                                                          hintText: "Enter code",
+                                                        ),
+                                                        obscureText: true,
+                                                        keyboardType: TextInputType.number,
+                                                      ),
+                                                      if (errorText != null)
+                                                        Padding(
+                                                          padding: const EdgeInsets.only(top: 8.0),
+                                                          child: Text(
+                                                            errorText!,
+                                                            style: TextStyle(
+                                                              color: Colors.red,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    ElevatedButton(
+                                                      onPressed: () => Navigator.of(context).pop(),
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: const Color(0XFFB5B5B5),
+                                                        foregroundColor: Colors.white,
+                                                        textStyle: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontFamily: 'Crimson',
+                                                        ),
+                                                      ),
+                                                      child: Text("Cancel"),
+                                                    ),
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        if (_codeController.text == "1234") {
+                                                          Navigator.of(context).pop();
+                                                          Navigator.pushReplacementNamed(context, '/pharmacy_login');
+                                                        } else {
+                                                          setState(() {
+                                                            errorText = "Invalid security code";
+                                                          });
+                                                        }
+                                                      },
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: const Color(0XFF4B352A),
+                                                        foregroundColor: Colors.white,
+                                                        textStyle: TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontFamily: 'Crimson',
+                                                        ),
+                                                      ),
+                                                      child: Text("Submit"),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0XFF4B352A),
+                                        foregroundColor: Colors.white,
+                                        textStyle: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Crimson',
+                                        ),
+                                      ),
+                                      child: Text("Continue"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: Image.asset(
+                            'asset/image/pharmacy.png',
+                            width: 70,
+                            height: 70,
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
