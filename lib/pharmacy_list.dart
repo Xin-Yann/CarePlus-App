@@ -57,7 +57,7 @@ class _PharmacyListState extends State<PharmacyList> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header with back button and centered title
+            // Header
             Padding(
               padding: const EdgeInsets.only(
                   top: 50.0, left: 16.0, right: 16.0, bottom: 20.0),
@@ -89,7 +89,7 @@ class _PharmacyListState extends State<PharmacyList> {
               ),
             ),
 
-            // Dropdown Box
+            // Dropdown
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Container(
@@ -123,13 +123,12 @@ class _PharmacyListState extends State<PharmacyList> {
 
             const SizedBox(height: 20),
 
-            // Pharmacy List
+            // Pharmacy list
             _selectedState == null
                 ? FutureBuilder<List<QueryDocumentSnapshot>>(
               future: _fetchAllPharmacies(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                       child: CircularProgressIndicator());
                 }
@@ -162,14 +161,12 @@ class _PharmacyListState extends State<PharmacyList> {
                   .collection(_selectedState!)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                       child: CircularProgressIndicator());
                 }
 
-                if (!snapshot.hasData ||
-                    snapshot.data!.docs.isEmpty) {
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return Center(
                       child: Text(
                           "No pharmacies found in $_selectedState."));
@@ -211,14 +208,16 @@ class _PharmacyListState extends State<PharmacyList> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (pharmacy['image'] != null && pharmacy['image'] != "")
+          if (pharmacy['imageUrl'] != null && pharmacy['imageUrl'] != "")
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
-                pharmacy['image'],
+                pharmacy['imageUrl'],
                 height: 250,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                const Icon(Icons.broken_image, size: 80),
               ),
             ),
           const SizedBox(height: 10),
