@@ -187,7 +187,6 @@ class _ProductDetailsState extends State<ProductDetails> {
 
 
                     if (userCartQuery.docs.isEmpty) {
-                      // First time: create cart document with initial item
                       await cartRef.add({
                         'email': userEmail,
                         'items': [

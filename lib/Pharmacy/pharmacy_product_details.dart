@@ -133,7 +133,7 @@ class _PharmacyProductDetailsState extends State<PharmacyProductDetails> {
   }
 
   void deleteProduct() async {
-    FocusScope.of(context).unfocus(); // Unfocus inputs before popping
+    FocusScope.of(context).unfocus();
     await widget.productDoc.reference.delete();
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -147,7 +147,7 @@ class _PharmacyProductDetailsState extends State<PharmacyProductDetails> {
 
     return WillPopScope(
       onWillPop: () async {
-        FocusScope.of(context).unfocus(); // Handle browser or app back
+        FocusScope.of(context).unfocus();
         return true;
       },
       child: Scaffold(

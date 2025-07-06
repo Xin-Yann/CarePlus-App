@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'doctor_ePrescription_medList.dart';
 
 class DoctorePrescriptionDetails extends StatelessWidget {
   final Map<String, dynamic> session;
@@ -77,7 +76,6 @@ class DoctorePrescriptionDetails extends StatelessWidget {
               ),
             ),
 
-            // Session Info
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -87,7 +85,6 @@ class DoctorePrescriptionDetails extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Prescription List
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
@@ -145,7 +142,6 @@ class DoctorePrescriptionDetails extends StatelessWidget {
                           final data = drugSnapshot.data!.data() as Map<String, dynamic>;
                           final drugName = data['name'] ?? 'Unknown Drug';
 
-                          // Now, get the strength price
                           return FutureBuilder<DocumentSnapshot>(
                             future: FirebaseFirestore.instance
                                 .collection('controlled_medicine')

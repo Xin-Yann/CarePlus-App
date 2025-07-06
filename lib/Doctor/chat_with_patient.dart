@@ -30,10 +30,11 @@ class _ChatWithPatientState extends State<ChatWithPatient> {
     final userEmail = currentUser.email;
     final snapshot = await FirebaseFirestore.instance.collection('doctors').get();
 
+    // Loop through doctors to find matching email
     for (final doc in snapshot.docs) {
       if (doc.data()['email'] == userEmail) {
         setState(() {
-          _customDoctorId = doc.id; // e.g., D1, D2
+          _customDoctorId = doc.id;
           _loading = false;
         });
         return;
@@ -108,6 +109,7 @@ class _ChatWithPatientState extends State<ChatWithPatient> {
               ],
             ),
           ),
+          // Session List
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
@@ -125,7 +127,7 @@ class _ChatWithPatientState extends State<ChatWithPatient> {
 
                 final sessions = snapshot.data!.docs;
 
-                // Sort sessions by date (desc), then time (desc)
+                // Sort sessions by date and time
                 sessions.sort((a, b) {
                   final aData = a.data() as Map<String, dynamic>;
                   final bData = b.data() as Map<String, dynamic>;
@@ -143,6 +145,7 @@ class _ChatWithPatientState extends State<ChatWithPatient> {
                       return bDate.compareTo(aDate);
                     }
 
+                    // Parse session time
                     TimeOfDay parseStartTime(String timeRange) {
                       final start = timeRange.split(" - ").first;
                       final parts = RegExp(r'(\d+):(\d+) (\w+)').firstMatch(start);
@@ -169,6 +172,7 @@ class _ChatWithPatientState extends State<ChatWithPatient> {
                   }
                 });
 
+                // Session Cards
                 return ListView.builder(
                   itemCount: sessions.length,
                   itemBuilder: (context, index) {

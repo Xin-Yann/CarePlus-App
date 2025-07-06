@@ -60,7 +60,6 @@ class _PharmacyManageProductState extends State<PharmacyManageProduct> {
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Color(0xFF6B4518)),
         onPressed: () async {
-          // Wait for Add Product to return selected category
           final result = await Navigator.push<String>(
             context,
             MaterialPageRoute(
@@ -68,7 +67,6 @@ class _PharmacyManageProductState extends State<PharmacyManageProduct> {
             ),
           );
 
-          // If result is not null, update category
           if (result != null && result.isNotEmpty) {
             setState(() {
               selectedCategory = result;
@@ -86,6 +84,15 @@ class _PharmacyManageProductState extends State<PharmacyManageProduct> {
             fontFamily: 'Crimson',
             fontWeight: FontWeight.bold,
           ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            Navigator.pushNamed(
+              context,
+              '/pharmacy_home',
+            );
+          },
         ),
       ),
       body: Column(

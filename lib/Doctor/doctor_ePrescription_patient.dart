@@ -64,18 +64,15 @@ class _DoctorePrescriptionPatientState
       };
     }).toList());
 
-    // ✅ SORT by date (latest first) then time (latest first)
     sessionList.sort((a, b) {
       final dateA = a['date'] ?? '';
       final dateB = b['date'] ?? '';
       final timeA = a['time'] ?? '';
       final timeB = b['time'] ?? '';
 
-      // First compare by date descending
       final dateCompare = dateB.compareTo(dateA);
       if (dateCompare != 0) return dateCompare;
 
-      // If same date, compare time descending
       return timeB.compareTo(timeA);
     });
 
@@ -131,7 +128,7 @@ class _DoctorePrescriptionPatientState
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () =>  Navigator.pushNamed(context, '/doctor_home'),
                     icon: const Icon(Icons.arrow_back_ios_new_rounded),
                     color: Color(0xFF6B4518),
                   ),

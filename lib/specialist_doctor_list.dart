@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'specialist_doctor_details.dart'; // Ensure this file exists and is correctly implemented
+import 'specialist_doctor_details.dart';
 
 class SpecialistDoctorList extends StatefulWidget {
   const SpecialistDoctorList({super.key});
@@ -165,7 +165,7 @@ class _SpecialistDoctorListState extends State<SpecialistDoctorList> {
           );
         },
         child: Container(
-          height: 160, // taller card for bigger image
+          height: 160,
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
@@ -176,7 +176,7 @@ class _SpecialistDoctorListState extends State<SpecialistDoctorList> {
                       ? imageUrl
                       : 'https://via.placeholder.com/960x1443',
                   height: 140,
-                  width: 93, // 960/1443 ≈ 0.665 aspect ratio
+                  width: 93,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     height: 140,
@@ -189,7 +189,7 @@ class _SpecialistDoctorListState extends State<SpecialistDoctorList> {
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start, // align to top
+                  mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
