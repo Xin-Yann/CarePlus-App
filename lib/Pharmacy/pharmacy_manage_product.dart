@@ -85,6 +85,15 @@ class _PharmacyManageProductState extends State<PharmacyManageProduct> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            Navigator.pushNamed(
+              context,
+              '/pharmacy_home',
+            );
+          },
+        ),
       ),
       body: Column(
         children: [
