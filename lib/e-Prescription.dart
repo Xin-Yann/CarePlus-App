@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 import 'cart.dart';
 
 class ePrescriptionPage extends StatefulWidget {
@@ -45,7 +44,6 @@ class _ePrescriptionPageState extends State<ePrescriptionPage> {
     if (querySnap.docs.isNotEmpty) {
       cartDoc = querySnap.docs.first.reference;
     } else {
-      // create a brand‑new cart doc
       cartDoc = cartCol.doc();
     }
 
@@ -373,7 +371,6 @@ class _ePrescriptionPageState extends State<ePrescriptionPage> {
                               final drugName =
                                   drugData['name'] ?? 'Unknown Drug';
 
-                              // Nested FutureBuilder for strength-specific price
                               return FutureBuilder<Map<String, num>?>(
                                 future: fetchDrugPrice(
                                   drugId: drugId,
@@ -507,7 +504,7 @@ class _ePrescriptionPageState extends State<ePrescriptionPage> {
                     ),
                   ),
 
-                  // Show a different icon/label if out of stock
+                  // Show icon if out of stock
                   icon: const Icon(Icons.add_shopping_cart),
 
                   label: Text('Add All to Cart'),

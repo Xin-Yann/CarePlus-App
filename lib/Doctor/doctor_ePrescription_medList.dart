@@ -40,6 +40,7 @@ class _DoctorePrescriptionMedListState
         'Skin Allergy',
       ];
 
+      // Loop through category to get drugs
       for (final symptom in symptomList) {
         final snapshot = await FirebaseFirestore.instance
             .collection('controlled_medicine')
@@ -53,12 +54,13 @@ class _DoctorePrescriptionMedListState
             drugs.add({
               ...data,
               'id': doc.id,
-              'symptom': symptom, // ✅ Add symptom to each drug entry
+              'symptom': symptom,
             });
           }
         }
       }
 
+      // Sort drugs a-z
       drugs.sort((a, b) => (a['name'] ?? '')
           .toString()
           .toLowerCase()
@@ -146,7 +148,7 @@ class _DoctorePrescriptionMedListState
           // Drug List
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator()) // Show loader
                 : filteredDrugs.isEmpty
                 ? const Center(child: Text("No drugs found."))
                 : ListView.separated(

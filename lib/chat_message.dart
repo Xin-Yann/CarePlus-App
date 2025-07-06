@@ -7,7 +7,7 @@ class ChatMessage extends StatefulWidget {
   final String sessionId;
   final String sessionTime;
   final String sessionDate;
-  final String userId; // Custom user ID like "U1"
+  final String userId;
 
   const ChatMessage({
     super.key,
@@ -86,7 +86,7 @@ class _ChatMessageState extends State<ChatMessage> {
           .collection('messages')
           .add({
         'text': text.trim(),
-        'timestamp': DateTime.now(), // show instantly
+        'timestamp': DateTime.now(),
         'senderId': widget.userId,
         'sessionId': widget.sessionId,
       });

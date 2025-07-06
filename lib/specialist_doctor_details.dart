@@ -36,7 +36,7 @@ class _SpecialistDoctorDetailsState extends State<SpecialistDoctorDetails> {
       final data = doc.data();
       if (data['email'] == userEmail) {
         setState(() {
-          _customUserId = doc.id; // U1, U2, etc.
+          _customUserId = doc.id;
           _loadingUserId = false;
         });
         return;

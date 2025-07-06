@@ -8,8 +8,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 
-import 'pharmacy_manage_product.dart'; // Make sure this imports the right page
-
 class PharmacyAddProduct extends StatefulWidget {
   const PharmacyAddProduct({super.key});
 
@@ -39,7 +37,6 @@ class _PharmacyAddProductState extends State<PharmacyAddProduct> {
     'Skin Allergy'
   ];
 
-  // ✅ Safe version for Flutter Web: always use new <input>
   Future<void> pickAndUploadImage() async {
     const imgbbApiKey = 'e6f550d58c3ce65d422f1483a8b92ef7';
 
@@ -164,7 +161,7 @@ class _PharmacyAddProductState extends State<PharmacyAddProduct> {
       const SnackBar(content: Text('Product added successfully')),
     );
 
-    // ✅ Pass back the selected category so the manage page can update dropdown
+    // Update dropdown
     Navigator.pop(context, selectedCategory);
   }
 

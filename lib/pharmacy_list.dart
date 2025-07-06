@@ -123,7 +123,6 @@ class _PharmacyListState extends State<PharmacyList> {
 
             const SizedBox(height: 20),
 
-            // Pharmacy list
             _selectedState == null
                 ? FutureBuilder<List<QueryDocumentSnapshot>>(
               future: _fetchAllPharmacies(),

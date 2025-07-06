@@ -23,7 +23,6 @@ class ProductCategory extends StatelessWidget {
       backgroundColor: const Color(0xFFE1D9D0),
       body: Column(
         children: [
-          // Custom AppBar
           Padding(
             padding: const EdgeInsets.only(
                 top: 50.0, left: 16.0, right: 16.0, bottom: 20.0),
@@ -67,7 +66,6 @@ class ProductCategory extends StatelessWidget {
             ),
           ),
 
-          // Grid content
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),

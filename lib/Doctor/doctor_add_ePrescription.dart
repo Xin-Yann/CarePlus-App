@@ -82,6 +82,7 @@ class _DoctorAddePrescriptionState extends State<DoctorAddePrescription> {
     }
   }
 
+  // Count price
   double getUnitPrice() {
     if (_strengthDetails.isEmpty || selectedStrength == null) return 0.0;
     final found = _strengthDetails.firstWhere(
