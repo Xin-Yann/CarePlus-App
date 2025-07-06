@@ -6,11 +6,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:html' as html;
-import 'dart:io';
 import 'dart:io' as io;
 
 class DoctorRegister extends StatefulWidget {
@@ -222,7 +220,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
         Navigator.pushReplacementNamed(
           context,
           '/doctor_home',
-        ); // Go to home screen
+        );
       }
     } on FirebaseAuthException catch (e) {
       print('Error: ${e.message}');
@@ -242,7 +240,6 @@ class _RegisterDoctor extends State<DoctorRegister> {
         }
       }
 
-      // Handle cursor position
       int selectionIndex = formatted.length;
       return TextEditingValue(
         text: formatted,
@@ -347,29 +344,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
             ),
 
             SizedBox(height: 20,),
-            // Padding(
-            //   padding: const EdgeInsets.symmetric(vertical: 10),
-            //   child: Column(
-            //     children: [
-            //       _profileImage != null
-            //           ? CircleAvatar(
-            //         backgroundImage: FileImage(_profileImage!),width: 100,
-            //         height: 100,,
-            //         radius: 50,
-            //       )
-            //           :CircleAvatar(
-            //         radius: 50,
-            //         backgroundColor: Colors.grey[300],
-            //         child: Icon(Icons.person, size: 50), // or maybe 60-70 for a snug fit
-            //       ),
-            //
-            //       TextButton(
-            //         onPressed: _pickAndUploadImage,
-            //         child: Text('Pick Profile Image'),
-            //       ),
-            //     ],
-            //   ),
-            // ),
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: SizedBox(
@@ -391,7 +366,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                         borderRadius: BorderRadius.circular(30),
                         borderSide: BorderSide(
                           color: Colors.white,
-                        ), // Border when focused
+                        ),
                       ),
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 12,
@@ -400,7 +375,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                       filled: true,
                       fillColor:
                           Colors
-                              .transparent, // Avoid overriding container color
+                              .transparent,
                     ),
                     onChanged: (String? newValue) {
                       setState(() {
@@ -468,7 +443,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -523,7 +498,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                   ),
                 ),
@@ -568,7 +543,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                   ),
                 ),
@@ -605,7 +580,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                   ),
                 ),
@@ -636,7 +611,7 @@ class _RegisterDoctor extends State<DoctorRegister> {
                   ),
                 ),
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, // align left
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'I understand and agree with the',
@@ -721,62 +696,19 @@ class _RegisterDoctor extends State<DoctorRegister> {
                   setState(() {});
                 },
                 style: ElevatedButton.styleFrom(
-                  minimumSize: Size(200, 50), // width: 200, height: 50
+                  minimumSize: Size(200, 50),
                   textStyle: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Crimson',
                   ),
-                  backgroundColor: const Color(0xFF6B4518), // Background color
+                  backgroundColor: const Color(0xFF6B4518),
                   foregroundColor: Colors.white,
                 ),
                 child: Text('Register'),
               ),
             ),
 
-            // Builder(
-            //   builder:
-            //       (context) => GestureDetector(
-            //     onTap: () {
-            //       print("Tapped");
-            //       Navigator.pushNamed(context, '/login');
-            //     },
-            //     child: Text(
-            //       'Login',
-            //       textAlign: TextAlign.center,
-            //       style: TextStyle(
-            //         color: Color(0xFF6B4518),
-            //         decoration: TextDecoration.underline,
-            //         fontFamily:
-            //         'Crimson', // Make sure your font is declared correctly in pubspec.yaml
-            //         fontSize: 20,
-            //       ),
-            //     ),
-            //   ),
-
-            // Padding(
-            //   padding: const EdgeInsets.all(8.0),
-            //   child: Builder(
-            //     builder:
-            //         (context) => GestureDetector(
-            //           onTap: () {
-            //             print("Tapped");
-            //             Navigator.pushNamed(context, '/doctor_login');
-            //           },
-            //           child: Text(
-            //             'Doctor Login',
-            //             textAlign: TextAlign.center,
-            //             style: TextStyle(
-            //               color: Color(0xFF6B4518),
-            //               decoration: TextDecoration.underline,
-            //               fontFamily:
-            //                   'Crimson', // Make sure your font is declared correctly in pubspec.yaml
-            //               fontSize: 20,
-            //             ),
-            //           ),
-            //         ),
-            //   ),
-            // ),
           ],
         ),
       ),
@@ -794,14 +726,13 @@ class ContactInputFormat extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // Extract digits only from new input
+
     String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
 
     String formatted = '';
     int maxLength;
     String pattern;
 
-    // Decide which pattern to use
     if (forcedPattern != null) {
       pattern = forcedPattern!;
     } else {
@@ -828,7 +759,6 @@ class ContactInputFormat extends TextInputFormatter {
       formatted = digitsOnly;
     }
 
-    // Count digits before the original cursor position
     int digitsBeforeCursor = 0;
     for (int i = 0; i < newValue.selection.end; i++) {
       if (i < newValue.text.length &&
@@ -836,7 +766,7 @@ class ContactInputFormat extends TextInputFormatter {
         digitsBeforeCursor++;
       }
     }
-    // Map digitsBeforeCursor to the formatted string index
+
     int cursorPos = 0;
     int digitsCounted = 0;
     while (cursorPos < formatted.length && digitsCounted < digitsBeforeCursor) {

@@ -24,7 +24,7 @@ class CustomTextField extends StatelessWidget {
           fillColor: Colors.white,
           hintText: hintText,
           hintStyle: TextStyle(
-            color: Colors.grey[500],  // hint text color
+            color: Colors.grey[500],
             fontStyle: FontStyle.italic,
           ),
           contentPadding: EdgeInsets.symmetric(
@@ -40,13 +40,10 @@ class CustomTextField extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: BorderSide(color: Colors.white), // Border when focused
+            borderSide: BorderSide(color: Colors.white),
           ),
         ),
         controller: valueController,
-        // onChanged: (value) {
-        //   onChanged();
-        // },
         keyboardType: TextInputType.number,
       ),
     );

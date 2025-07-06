@@ -65,7 +65,6 @@ class _DoctorProfileState extends State<DoctorProfile> {
     if (user != null) {
       final loggedInEmail = user.email?.trim();
 
-      // Query the 'doctors' collection where 'email' matches
       final querySnapshot =
           await FirebaseFirestore.instance
               .collection('doctors')
@@ -122,7 +121,6 @@ class _DoctorProfileState extends State<DoctorProfile> {
 
       final docId = snapshot.docs.first.id;
 
-      // Prepare updated data
       Map<String, dynamic> updatedData = {
         'name': name.text.trim(),
         'email': email.text.trim(),
@@ -138,7 +136,6 @@ class _DoctorProfileState extends State<DoctorProfile> {
         updatedData['imageUrl'] = imageUrl;
       }
 
-      // Update the Firestore document
       await doctorsRef.doc(docId).update(updatedData);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -235,7 +232,6 @@ class _DoctorProfileState extends State<DoctorProfile> {
       if (user != null) {
         final email = user.email;
 
-        // Query doctor by email to find the correct doc ID (e.g., 'D1', 'D2', etc.)
         final querySnapshot =
             await FirebaseFirestore.instance
                 .collection('doctors')
@@ -246,13 +242,11 @@ class _DoctorProfileState extends State<DoctorProfile> {
         if (querySnapshot.docs.isNotEmpty) {
           final docId = querySnapshot.docs.first.id;
 
-          // Delete doctor document
           await FirebaseFirestore.instance
               .collection('doctors')
               .doc(docId)
               .delete();
 
-          // Delete the user's auth account
           await user.delete();
 
           print("Doctor account deleted successfully.");
@@ -397,7 +391,6 @@ class _DoctorProfileState extends State<DoctorProfile> {
                               ),
                     ),
 
-                    // Show "Change Profile Pic" button only when editing
                     if (isEditing) ...[
                       SizedBox(height: 20.0),
                       Center(
@@ -440,20 +433,12 @@ class _DoctorProfileState extends State<DoctorProfile> {
                           ),
                           child: DropdownButtonFormField<String>(
                             isExpanded:
-                                true, // Make dropdown take full width and align left
+                                true,
                             value:
                                 selectedSpecialization?.isNotEmpty == true
                                     ? selectedSpecialization
                                     : null,
                             decoration: InputDecoration(
-                              // enabledBorder: OutlineInputBorder(
-                              //   borderRadius: BorderRadius.circular(30),
-                              //   borderSide: BorderSide(color: Colors.white),
-                              // ),
-                              // focusedBorder: OutlineInputBorder(
-                              //   borderRadius: BorderRadius.circular(30),
-                              //   borderSide: BorderSide(color: Colors.white),
-                              // ),
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
                               disabledBorder: InputBorder.none,
@@ -479,7 +464,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                                     child: Align(
                                       alignment:
                                           Alignment
-                                              .centerLeft, // Align text left
+                                              .centerLeft,
                                       child: Text(specialization),
                                     ),
                                   );
@@ -658,51 +643,6 @@ class _DoctorProfileState extends State<DoctorProfile> {
                       ),
                     ),
 
-                    // //Password
-                    // SizedBox(height: 15.0),
-                    // Padding(
-                    //   padding: const EdgeInsets.all(8.0),
-                    //   child: Text(
-                    //     'Password',
-                    //     style: TextStyle(
-                    //       fontSize: 16,
-                    //       fontWeight: FontWeight.bold,
-                    //       color: const Color(0xFF6B4518),
-                    //     ),
-                    //   ),
-                    // ),
-                    // Padding(
-                    //   padding: const EdgeInsets.all(8.0),
-                    //   child: Container(
-                    //     width: 382,
-                    //     height: 60,
-                    //     child: TextField(
-                    //       controller: password,
-                    //       decoration: InputDecoration(
-                    //         hintText: 'Password',
-                    //         hintStyle: TextStyle(
-                    //           color: Colors.grey[500],
-                    //           fontStyle: FontStyle.italic,
-                    //         ),
-                    //         filled: true,
-                    //         fillColor: Colors.white,
-                    //         contentPadding: EdgeInsets.symmetric(
-                    //           horizontal: 16,
-                    //           vertical: 16,
-                    //         ),
-                    //         enabledBorder: OutlineInputBorder(
-                    //           borderRadius: BorderRadius.circular(30),
-                    //           borderSide: BorderSide(color: Colors.white),
-                    //         ),
-                    //         focusedBorder: OutlineInputBorder(
-                    //           borderRadius: BorderRadius.circular(30),
-                    //           borderSide: BorderSide(color: Colors.white), // Border when focused
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
-
                     //Professional Education/Qualification
                     Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -759,7 +699,7 @@ class _DoctorProfileState extends State<DoctorProfile> {
                       ),
                     ),
 
-                    //Address
+                    //Malaysian Medical Council (MMC) Number
                     SizedBox(height: 15.0),
                     Padding(
                       padding: const EdgeInsets.all(8.0),

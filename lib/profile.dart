@@ -33,7 +33,6 @@ class _ProfileState extends State<Profile> {
     if (user != null) {
       final usersRef = FirebaseFirestore.instance.collection('users');
 
-      // Query Firestore to find the document with the user's email
       final querySnapshot = await usersRef
           .where('email', isEqualTo: user.email)
           .limit(1)
@@ -62,7 +61,6 @@ class _ProfileState extends State<Profile> {
       if (user != null) {
         final usersRef = FirebaseFirestore.instance.collection('users');
 
-        // Find the custom document by matching user's email
         final querySnapshot = await usersRef
             .where('email', isEqualTo: user.email)
             .limit(1)
@@ -71,10 +69,8 @@ class _ProfileState extends State<Profile> {
         if (querySnapshot.docs.isNotEmpty) {
           final docID = querySnapshot.docs.first.id;
 
-          // Delete Firestore document with custom ID
           await usersRef.doc(docID).delete();
 
-          // Delete Firebase Auth user
           await user.delete();
 
           print("User account deleted successfully.");
@@ -457,51 +453,6 @@ class _ProfileState extends State<Profile> {
                       ),
                     ),
 
-                    // //Password
-                    // SizedBox(height: 15.0),
-                    // Padding(
-                    //   padding: const EdgeInsets.all(8.0),
-                    //   child: Text(
-                    //     'Password',
-                    //     style: TextStyle(
-                    //       fontSize: 16,
-                    //       fontWeight: FontWeight.bold,
-                    //       color: const Color(0xFF6B4518),
-                    //     ),
-                    //   ),
-                    // ),
-                    // Padding(
-                    //   padding: const EdgeInsets.all(8.0),
-                    //   child: Container(
-                    //     width: 382,
-                    //     height: 60,
-                    //     child: TextField(
-                    //       controller: password,
-                    //       decoration: InputDecoration(
-                    //         hintText: 'Password',
-                    //         hintStyle: TextStyle(
-                    //           color: Colors.grey[500],
-                    //           fontStyle: FontStyle.italic,
-                    //         ),
-                    //         filled: true,
-                    //         fillColor: Colors.white,
-                    //         contentPadding: EdgeInsets.symmetric(
-                    //           horizontal: 16,
-                    //           vertical: 16,
-                    //         ),
-                    //         enabledBorder: OutlineInputBorder(
-                    //           borderRadius: BorderRadius.circular(30),
-                    //           borderSide: BorderSide(color: Colors.white),
-                    //         ),
-                    //         focusedBorder: OutlineInputBorder(
-                    //           borderRadius: BorderRadius.circular(30),
-                    //           borderSide: BorderSide(color: Colors.white), // Border when focused
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
-
                     //Address
                     SizedBox(height: 15.0),
                     Padding(
@@ -545,7 +496,7 @@ class _ProfileState extends State<Profile> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide(color: Colors.white), // Border when focused
+                              borderSide: BorderSide(color: Colors.white),
                             ),
                             disabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30),
@@ -600,7 +551,7 @@ class _ProfileState extends State<Profile> {
                             }
 
                             setState(() {
-                              isEditing = !isEditing; // Toggle the editing state
+                              isEditing = !isEditing;
                             });
                           },
                           style: ElevatedButton.styleFrom(

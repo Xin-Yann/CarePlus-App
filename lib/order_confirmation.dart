@@ -121,12 +121,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
             const SizedBox(height: 18),
             ElevatedButton(
               onPressed: () {
-                // Show a snackbar
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Proceeding to payment...")),
                 );
 
-                // Navigate to PaymentPage and pass cartItems
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -220,7 +218,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
             ),
 
-            //const Divider(thickness: 1),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 15),
               child: Text(

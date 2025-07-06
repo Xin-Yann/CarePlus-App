@@ -12,7 +12,7 @@ class Cart extends StatefulWidget {
 
 class _CartState extends State<Cart> {
   late Future<List<Map<String, dynamic>>> _cartItemsFuture;
-
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final List<Map<String, dynamic>> cartItems = [];
   final Map<String, bool> itemChecked = {};
   final Map<String, int> itemQuantity = {};
@@ -386,13 +386,11 @@ class CartItemWidget extends StatelessWidget {
       final email = FirebaseAuth.instance.currentUser?.email;
       if (email == null) return;
 
-// First, get all cart items for this email
       final querySnapshot = await FirebaseFirestore.instance
           .collection('cart')
           .where('email', isEqualTo: email)
           .get();
 
-// Then delete each document one by one
       for (final doc in querySnapshot.docs) {
         await doc.reference.delete();
       }

@@ -23,7 +23,6 @@ class Footer extends StatelessWidget {
               _FooterItem(
                 imagePath: 'asset/image/home.png',
                 label: 'Home',
-                //route: '/home',
                 onTap: () {
                   Navigator.pushReplacement(
                     context,
@@ -36,7 +35,6 @@ class Footer extends StatelessWidget {
               _FooterItem(
                 imagePath: 'asset/image/drug.png',
                 label: 'Product',
-                //route: '/product_category',
                 onTap: () {
                   Navigator.pushReplacement(
                     context,
@@ -49,12 +47,6 @@ class Footer extends StatelessWidget {
               _FooterItem(
                 imagePath: 'asset/image/messenger.png',
                 label: 'Message',
-
-//                 route: '/chat_with_doctor',
-//                 width: 26,
-//                 height: 26,
-
-                //route: '/home',
                 onTap: () {
                   Navigator.pushReplacement(
                     context,
@@ -63,7 +55,6 @@ class Footer extends StatelessWidget {
                 },
                 width: 30,
                 height: 30,
-
               ),
               Column(
                 children: [
@@ -85,7 +76,6 @@ class Footer extends StatelessWidget {
               _FooterItem(
                 imagePath: 'asset/image/user.png',
                 label: 'Account',
-                //route: '/profile',
                 onTap: () {
                   Navigator.pushReplacement(
                     context,
@@ -106,7 +96,6 @@ class Footer extends StatelessWidget {
 class _FooterItem extends StatelessWidget {
   final String imagePath;
   final String label;
-  //final String route;
   final double width;
   final double height;
   final VoidCallback? onTap;
@@ -115,7 +104,6 @@ class _FooterItem extends StatelessWidget {
   const _FooterItem({
     required this.imagePath,
     required this.label,
-    //required this.route,
     this.width = 24.0,
     this.height = 24.0,
     this.onTap,
@@ -127,9 +115,6 @@ class _FooterItem extends StatelessWidget {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
-        // onTap: () {
-        //   Navigator.pushReplacementNamed(context, route);
-        // },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

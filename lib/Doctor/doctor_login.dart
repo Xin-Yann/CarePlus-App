@@ -18,7 +18,6 @@ class _LoginDoctor extends State<DoctorLogin> {
   bool _obscurePassword = true;
 
   String? errorText;
-  //final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> _loginDoctor() async {
     bool isValidEmail = emailRegex.hasMatch(email.text);
@@ -78,7 +77,6 @@ class _LoginDoctor extends State<DoctorLogin> {
         } else if (e.code == 'invalid-credential') {
           errorText = 'Incorrect email or password.';
         } else {
-          // fallback for unexpected codes
           errorText = 'Login failed: ${e.message}';
         }
       });

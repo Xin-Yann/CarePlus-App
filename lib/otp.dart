@@ -136,7 +136,6 @@ class _OTPPageState extends State<OTPPage> {
     final ids = stateDocIds[state];
     if (ids == null || ids.isEmpty) return null;
 
-    // Simple round‑robin: spread the load fairly each time an order comes in.
     final index = DateTime.now().millisecondsSinceEpoch % ids.length;
     return ids[index];
   }
@@ -187,10 +186,9 @@ class _OTPPageState extends State<OTPPage> {
   Future<void> _resendOtp() async {
     if (!_canResend) return;
 
-    // Increment first; if it exceeds the limit, cancel.
     _resendCount++;
     if (_resendCount > _maxResends) {
-      _cancelPayment();            // 🚫 roll back flow
+      _cancelPayment();
       return;
     }
     _otp = generateOTP();
@@ -289,7 +287,6 @@ class _OTPPageState extends State<OTPPage> {
         }
       }
 
-// 2️⃣ Run transaction using cached data
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final counterRef = FirebaseFirestore.instance.collection('metadata').doc('orderCounter');
         final counterSnap = await transaction.get(counterRef);
@@ -299,7 +296,6 @@ class _OTPPageState extends State<OTPPage> {
 
         transaction.set(counterRef, {'lastOrderNumber': newOrderNumber});
 
-        // Create order document
         final orderRef = FirebaseFirestore.instance.collection('orders').doc(orderId);
         final assignedId = _assignPharmacyId(widget.address);
         if (assignedId == null) {
@@ -340,7 +336,7 @@ class _OTPPageState extends State<OTPPage> {
             throw Exception('Insufficient stock for $drugId (stock: $currentStock, qty: $qty)');
           }
 
-          print('✅ Deducting $qty from $productRef (stock: $currentStock)');
+          print('Deducting $qty from $productRef (stock: $currentStock)');
           transaction.update(productRef, {
             'stock': FieldValue.increment(-qty),
           });

@@ -548,16 +548,14 @@ class OrderCard extends StatelessWidget {
   String _formatTotal(dynamic value) {
     if (value == null) return '--';
 
-    // already a number
     if (value is num) return value.toStringAsFixed(2);
 
-    // try to parse a string, stripping “RM”, commas, etc.
     if (value is String) {
       final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '');
       final parsed = double.tryParse(cleaned);
       if (parsed != null) return parsed.toStringAsFixed(2);
     }
 
-    return '--'; // fallback
+    return '--';
   }
 }

@@ -15,8 +15,6 @@ class _ForgotPasswordSate extends State<ForgotPassword> {
   final _formKey = GlobalKey<FormState>();
   String? errorText;
 
-  //final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   Future<void> _sendResetEmail() async {
     if (_formKey.currentState!.validate()) {
       try {
@@ -26,7 +24,7 @@ class _ForgotPasswordSate extends State<ForgotPassword> {
             content: Text('Password reset email sent. Check your inbox.'),
           ),
         );
-        Navigator.pushNamed(context, '/login'); // Return to login page
+        Navigator.pushNamed(context, '/login');
       } on FirebaseAuthException catch (e) {
         String message;
         if (e.code == 'user-not-found') {

@@ -22,7 +22,6 @@ class _DoctorHomeState extends State<DoctorHome> {
 
   Future<void> _signOutUser() async {
     await FirebaseAuth.instance.signOut();
-    // Optional: Navigate to login page
     Navigator.pushReplacementNamed(context, '/');
   }
 
@@ -199,29 +198,6 @@ class _DoctorHomeState extends State<DoctorHome> {
                           );
                         }
 
-                        final loggedInEmail = user.email!.trim();
-                        final doctorId = data['doctorId'];
-
-                        // return FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                        //   future:
-                        //       FirebaseFirestore.instance
-                        //           .collection('doctors')
-                        //           .where('doctor_id', isEqualTo: doctorId)
-                        //           .where('email', isEqualTo: loggedInEmail)
-                        //           .limit(1)
-                        //           .get(),
-                        //   builder: (context, snapshot) {
-                        //     if (snapshot.connectionState != ConnectionState.done) {
-                        //       return const ListTile(
-                        //         title: Text('Loading doctor…'),
-                        //         subtitle: LinearProgressIndicator(),
-                        //       );
-                        //     }
-                        //
-                        //     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        //       return const SizedBox.shrink();
-                        //     }
-
                         final userId = data['userId'];
 
                         return FutureBuilder<
@@ -266,7 +242,7 @@ class _DoctorHomeState extends State<DoctorHome> {
                                         'dd MMM yyyy (EEEE)',
                                       ).format(parsedDate);
                                     } catch (e) {
-                                      return rawDate; // fallback if parsing fails
+                                      return rawDate;
                                     }
                                   } else {
                                     return 'N/A';

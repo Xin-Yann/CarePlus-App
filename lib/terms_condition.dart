@@ -31,7 +31,7 @@ class _TermsConditionState extends State<TermsCondition> {
               style: TextStyle(
                 color: Color(0xFF6B4518),
                 fontFamily:
-                    'Crimson', // Make sure your font is declared correctly in pubspec.yaml
+                    'Crimson',
                 fontSize: 40,
               ),
             ),

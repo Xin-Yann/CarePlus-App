@@ -70,8 +70,10 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
       return;
     }
 
-    final Useremail = user.email!;
+    final userEmail = user.email!;
+    print('Looking for pharmacy with email: $userEmail');
 
+    bool found = false;
 
     for (final entry in stateDocIds.entries) {
       final state = entry.key;
@@ -87,23 +89,26 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
           final data = doc.data() as Map<String, dynamic>?;
 
           if (data != null && data.containsKey('email')) {
-            print('Checking ${state} / ${id} -> Email: ${data['email']}');
-            if (data['email'] == Useremail) {
+            print('📄 Checked: $state / $id -> Email: ${data['email']}');
+            if (data['email'].toString().trim().toLowerCase() == userEmail.toLowerCase()) {
               setState(() {
                 _pharmacyState = state;
                 _pharmacyId = id;
               });
-              print('Match found in ${state} / ${id}');
+              print('Match found in $state / $id');
+              found = true;
               return;
             }
           }
         }
-
       }
     }
 
-    print('Pharmacy record not found.');
+    if (!found) {
+      print('Pharmacy record not found for $userEmail');
+    }
   }
+
 
 
   @override
@@ -214,7 +219,7 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
         if (snap.hasError) {
           print('Stream error: ${snap.error}');
 
-          return Center(child: Text('🔥 ${snap.error}'));
+          return Center(child: Text('${snap.error}'));
         }
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -225,7 +230,7 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
 
         final docs = snap.data!.docs;
         if (docs.isEmpty) {
-          return const Center(child: Text('No TNG e‑wallet orders yet.'));
+          return const Center(child: Text('No Debit/Credit Card orders yet.'));
         }
 
         final orders =
@@ -296,29 +301,6 @@ class _OrderHistoryPageState extends State<PharmacyHistory>
     );
 
   }
-
-
-
-// String _formatTimestamp(dynamic ts) {
-  //   if (ts is Timestamp) {
-  //     final dt = ts.toDate();
-  //     return '${dt.day}/${dt.month}/${dt.year}';
-  //   }
-  //   return '--';
-  // }
-  //
-  // String _formatTotal(dynamic value) {
-  //   if (value == null) return '--';
-  //   if (value is num) return value.toStringAsFixed(2);
-  //
-  //   if (value is String) {
-  //     final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '');
-  //     final parsed = double.tryParse(cleaned);
-  //     if (parsed != null) return parsed.toStringAsFixed(2);
-  //   }
-  //
-  //   return '--';
-  // }
 }
 
 class OrderCard extends StatelessWidget {
@@ -326,11 +308,10 @@ class OrderCard extends StatelessWidget {
   final Map<String, dynamic> data;
 
   String generateTrackingNumber() {
-    const prefix = 'TR'; // <-- always at the front
+    const prefix = 'TR';
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rand = Random.secure();
 
-    // 10 random chars + the 2‑char prefix = 12 total
     final randomPart =
         List.generate(10, (_) => chars[rand.nextInt(chars.length)]).join();
 
@@ -345,7 +326,7 @@ class OrderCard extends StatelessWidget {
     final snap = await tx.get(counterRef);
     final next = (snap.data()?['next'] ?? 100000) as int;
     tx.update(counterRef, {'next': next + 1});
-    return next.toString().padLeft(6, '0'); // 6‑digit, zero‑padded
+    return next.toString().padLeft(6, '0');
   }
 
   @override
@@ -508,7 +489,6 @@ class OrderCard extends StatelessWidget {
                                     height: 60,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
-                                      // Fallback to asset image
                                       return Image.asset(
                                         'asset/image/weblogo.png',
                                         width: 60,
@@ -581,7 +561,7 @@ class OrderCard extends StatelessWidget {
                       onPressed: () async {
                         Navigator.of(
                           context,
-                        ).pop(); // close the dialog (optional)
+                        ).pop();
 
                         final trackingNo = generateTrackingNumber();
                         final rand = Random.secure();
@@ -594,33 +574,31 @@ class OrderCard extends StatelessWidget {
                             .collection('orders')
                             .doc(
                               data['orderId'],
-                            ) // make sure this really *is* the doc‑id
+                            )
                             .update({
                               'orderStatus': 'Shipped',
                               'trackingNo': trackingNo,
                               'deliveryDate': Timestamp.fromDate(deliveryDate),
-                              // 'trackingUrl': tracking['trackingUrl'],
                             });
                       },
                     ),
 
                   if (data['orderStatus'] ==
-                      'Shipped') // ← comparison, not assignment
+                      'Shipped')
                     TextButton(
                       child: Text('Delivered'),
                       onPressed: () async {
-                        Navigator.of(context).pop(); // close the dialog
+                        Navigator.of(context).pop();
 
-                        // OPTIONAL: simulate 3‑5 days after “Shipped” if you still want that
                         final rand = Random.secure();
-                        final daysToAdd = 3 + rand.nextInt(3); // 3, 4, or 5
+                        final daysToAdd = 3 + rand.nextInt(3);
                         final deliveredDate = DateTime.now().add(
                           Duration(days: daysToAdd),
                         );
 
                         await FirebaseFirestore.instance
                             .collection('orders')
-                            .doc(data['orderId']) // real doc‑id
+                            .doc(data['orderId'])
                             .update({
                               'orderStatus': 'Delivered',
                               'deliveryDate': Timestamp.fromDate(deliveredDate),

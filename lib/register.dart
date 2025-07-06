@@ -79,7 +79,6 @@ class _RegisterState extends State<Register> {
       final count = snapshot.size;
       final customID = 'U${count + 1}';
 
-      // Step 2: Register with Firebase Auth
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email.text.trim(),
         password: password.text.trim(),
@@ -122,7 +121,6 @@ class _RegisterState extends State<Register> {
         }
       }
 
-      // Handle cursor position
       int selectionIndex = formatted.length;
       return TextEditingValue(
         text: formatted,
@@ -165,13 +163,6 @@ class _RegisterState extends State<Register> {
               ),
             ),
 
-            //Name
-            // CustomTextField(
-            //   hintText: 'Name',
-            //   valueController: name,
-            //   onChanged: () {},
-            // ),
-
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(
@@ -199,7 +190,7 @@ class _RegisterState extends State<Register> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                   ),
                 ),
@@ -246,7 +237,7 @@ class _RegisterState extends State<Register> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                     suffixIcon: Icon(Icons.calendar_month, color: Colors.grey),
                   ),
@@ -287,7 +278,7 @@ class _RegisterState extends State<Register> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                   ),
                 ),
@@ -327,19 +318,13 @@ class _RegisterState extends State<Register> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
 
-            //Email
-            // CustomTextField(
-            //   hintText: 'Email',
-            //   valueController: email,
-            //   onChanged: () {},
-            // ),
 
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -368,7 +353,7 @@ class _RegisterState extends State<Register> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                   ),
                 ),
@@ -405,7 +390,7 @@ class _RegisterState extends State<Register> {
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide(
                         color: Colors.white,
-                      ), // Border when focused
+                      ),
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -449,7 +434,7 @@ class _RegisterState extends State<Register> {
                 ),
 
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, // align left
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'I understand and agree with the',
@@ -532,62 +517,18 @@ class _RegisterState extends State<Register> {
                   setState(() {});
                 },
                 style: ElevatedButton.styleFrom(
-                  minimumSize: Size(200, 50), // width: 200, height: 50
+                  minimumSize: Size(200, 50),
                   textStyle: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Crimson',
                   ),
-                  backgroundColor: const Color(0xFF6B4518), // Background color
+                  backgroundColor: const Color(0xFF6B4518),
                   foregroundColor: Colors.white,
                 ),
                 child: Text('Register'),
               ),
             ),
-
-            // Builder(
-            //   builder:
-            //       (context) => GestureDetector(
-            //     onTap: () {
-            //       print("Tapped");
-            //       Navigator.pushNamed(context, '/login');
-            //     },
-            //     child: Text(
-            //       'Login',
-            //       textAlign: TextAlign.center,
-            //       style: TextStyle(
-            //         color: Color(0xFF6B4518),
-            //         decoration: TextDecoration.underline,
-            //         fontFamily:
-            //         'Crimson', // Make sure your font is declared correctly in pubspec.yaml
-            //         fontSize: 20,
-            //       ),
-            //     ),
-            //   ),
-
-            // Padding(
-            //   padding: const EdgeInsets.all(8.0),
-            //   child: Builder(
-            //     builder:
-            //         (context) => GestureDetector(
-            //           onTap: () {
-            //             print("Tapped");
-            //             Navigator.pushNamed(context, '/login');
-            //           },
-            //           child: Text(
-            //             'Login',
-            //             textAlign: TextAlign.center,
-            //             style: TextStyle(
-            //               color: Color(0xFF6B4518),
-            //               decoration: TextDecoration.underline,
-            //               fontFamily:
-            //                   'Crimson', // Make sure your font is declared correctly in pubspec.yaml
-            //               fontSize: 20,
-            //             ),
-            //           ),
-            //         ),
-            //   ),
-            // ),
           ],
         ),
       ),
@@ -615,7 +556,6 @@ class ICInputFormat extends TextInputFormatter {
       }
     }
 
-    // Count digits before the original cursor position
     int digitsBeforeCursor = 0;
     for (int i = 0; i < newValue.selection.end; i++) {
       if (i < newValue.text.length &&
@@ -623,7 +563,7 @@ class ICInputFormat extends TextInputFormatter {
         digitsBeforeCursor++;
       }
     }
-    // Map digitsBeforeCursor to the formatted string index
+
     int cursorPos = 0;
     int digitsCounted = 0;
     while (cursorPos < formatted.length && digitsCounted < digitsBeforeCursor) {
@@ -650,14 +590,13 @@ class ContactInputFormat extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // Extract digits only from new input
+
     String digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
 
     String formatted = '';
     int maxLength;
     String pattern;
 
-    // Decide which pattern to use
     if (forcedPattern != null) {
       pattern = forcedPattern!;
     } else {
@@ -684,7 +623,6 @@ class ContactInputFormat extends TextInputFormatter {
       formatted = digitsOnly;
     }
 
-    // Count digits before the original cursor position
     int digitsBeforeCursor = 0;
     for (int i = 0; i < newValue.selection.end; i++) {
       if (i < newValue.text.length &&
@@ -692,7 +630,7 @@ class ContactInputFormat extends TextInputFormatter {
         digitsBeforeCursor++;
       }
     }
-    // Map digitsBeforeCursor to the formatted string index
+
     int cursorPos = 0;
     int digitsCounted = 0;
     while (cursorPos < formatted.length && digitsCounted < digitsBeforeCursor) {
